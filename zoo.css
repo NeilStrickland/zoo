@@ -1,0 +1,109 @@
+body {
+ font-size: 12px;
+ font-family: Verdana, Helvetica, sans-serif;
+ margin: 0;
+ margin-left: 10px;
+ padding: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+ margin-bottom: 2px;
+ margin-top: 10px; 
+} 
+
+h1 { font-size: 24px; }  
+h2 { font-size: 18px; } 
+h3 { font-size: 16px; } 
+
+td {
+ font-size: 12px;
+ vertical-align: top;
+}
+
+table#main_table {
+ border-collapse: collapse; 
+}
+
+table#main_table td {
+ padding: 3px 0.5em;
+ margin-left: 3px;
+ border: 1px solid #CCCCCC; 
+}
+
+td.green {
+ font-size: 12px;
+ text-decoration: none;
+ padding: 3px 0.5em;
+ margin-left: 3px;
+ border: 1px solid #778;
+ background: #DED;
+}
+
+td.command {
+ font-weight: bold;
+ font-size: 12px;
+ text-decoration: none;
+ padding: 3px 0.5em;
+ margin-left: 3px;
+ border: 1px solid #778;
+ background: #DDE;
+}
+
+td.command a:link { 
+ color: #448;
+ text-decoration: none;
+}  
+
+td.command:hover { 
+ color: #000;
+ background: #AAE;
+ border-color: #227;   
+ cursor: pointer;
+}
+
+table.edged { 
+ border-collapse: collapse;
+}
+
+table.edged td {
+ padding: 3px 0.5em;
+ margin-left: 3px;
+ border: 1px solid #CCCCCC; 
+}
+
+table.quiz_feedback { 
+ border-collapse: collapse;
+}
+
+table.quiz_feedback td {
+ padding: 3px 0.5em;
+ margin-left: 3px;
+ border: 1px solid #CCCCCC;
+ vertical-align: top;
+ width: 200px;
+ height: 160px;
+}
+
+table.striped{display:block;overflow:auto}
+table.striped tr:nth-child(even)>td{background-color:#f1f2f2}
+table.striped td{border:1px solid #c1c1c1}
+
+table.timetable td {
+ border: 1px solid #CCCCCC; 
+}
+
+tr.spacer { height: 1px; }
+tr.spacer td {  border: none; }
+
+div.text {
+ width: 600px;
+}
+
+td.semester_header {
+ font-weight: bold;
+ text-align: center;
+}
+
+span.module_title {
+ font-style: italic;
+}
