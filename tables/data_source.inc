@@ -29,11 +29,26 @@ class data_source extends frog_object {
   global $zoo;
 
   parent::__construct($zoo,'data_source',$id,$with_defaults);
-
-  $this->species_page_formats = explode('|',$this->species_page_format);
  }
 
+ function subclass() {
+  $subclass_name = 'data_source_' . $this->code;
+  if (class_exists($subclass_name)) {
+   $x = new $subclass_name();
+   $x->id = $this->id;
+   $x->name = $this->name;
+   $x->code = $this->code;
+   $x->default_key = $this->default_key;
+   $x->species_page_format = $this->species_page_format;
+   return $x; 
+  } else {
+   return $this;
+  }
+ }
+ 
  function species_page_url($r) {
+  $this->species_page_formats = explode('|',$this->species_page_format);
+
   $vals = array();
   $vals['G'] = ucase_words($r->genus);
   $vals['g'] = strtolower($vals['G']);
