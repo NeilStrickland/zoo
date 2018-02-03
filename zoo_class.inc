@@ -22,6 +22,14 @@ class zoo_class extends frog {
   return $this->species_index;
  }
 
+ function load_data_sources() {
+  $ss = $this->load_all('data_sources');
+  $this->data_sources = array();
+  foreach($ss as $s) {
+   $this->data_sources[$s->id] = $s->subclass();
+  }
+ }
+ 
  function find_species($g,$s) {
   if (! isset($this->species_index)) {
    $this->make_species_index();
