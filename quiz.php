@@ -70,7 +70,7 @@ function try_quiz($group) {
  echo <<<HTML
 <html>
 <head>
-<link rel="stylesheet" href="http://localhost/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
+<link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
 <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
 <script type="text/javascript">
 
@@ -167,7 +167,7 @@ null];
   </ul>
  </div>
 </div>
-<script type="text/javascript" src="http://localhost/js/tabber/tabber.js"></script>
+<script type="text/javascript" src="/js/tabber/tabber.js"></script>
 </body>
 </html>
 
