@@ -27,13 +27,42 @@ function choose_species() {
 //////////////////////////////////////////////////////////////////////
 
 function find_images_for($species) {
+ global $zoo;
+
+ $zoo->attach_images();
+ 
+ $temp_images_dir     = $zoo->data_dir . '/temp_images';
+ $original_images_dir = $zoo->data_dir . '/original_images';
+ $images_dir          = $zoo->data_dir . '/images';
+
+ $ff = scandir($temp_images_dir);
+ foreach ($ff as $f) {
+  $f0 = $temp_images_dir . '/' . $f;
+  if ($f != '.' && $f != '..' && is_dir($f0)) {
+   if (count(scandir($f0)) == 2) {
+    //    rmdir($f0);
+   }
+  }
+ }
+ 
+ $species_temp_dir    = $temp_images_dir . '/' . $species->genus . '_' . $species->species;
+ $latest_dir          = $temp_images_dir . '/Latest';
+
+ if (! (file_exists($species_temp_dir) && is_dir($species_temp_dir))) {
+  mkdir($species_temp_dir);
+ }
+
+ file_put_contents($latest_dir . '/id.txt',$species->id);
+ 
  $species->load_images();
- $web_images = image_search($species->binomial);
+ $species->load_data_records();
 
  echo <<<HTML
 <html>
 <head>
  <title>{$species->binomial}</title>
+ <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
+ <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
  <script type="text/javascript" src="find_images.js"></script>
 </head>
 <body>
@@ -59,121 +88,113 @@ HTML;
   }
 
   echo <<<HTML
+  </tr>
+  <tr>
+   
+HTML;
+   
+  foreach ($species->images as $i) {
+   $i->set_size();
+   $g = $i->geometry_string();
+   
+   echo <<<HTML
+   <td>$g<br/>{$i->id}</td>
+  
+HTML;
+  }
+  
+  echo <<<HTML
+  </tr>
+  <tr>
+   
+HTML;
+   
+  foreach ($species->images as $i) {
+   
+   echo <<<HTML
+   <td>
+    <a target="_blank" href="fix_image.php?id={$i->id}">Fix</a>&nbsp;
+    <a href="javascript:delete_image({$i->id})">Delete</a>
+   </td>
+  
+HTML;
+  }
+  
+  echo <<<HTML
+  </tr>
  </table>
  <br/>
 
 HTML;
+ } else {
+  echo "No existing images<br/>";
  }
 
+ if (isset($species->data_records_by_code['eol'])) {
+  $r = $species->data_records_by_code['eol'];
+  $eol_url = $r->image_url();
+ } else {
+  $eol_url="http://www.eol.org/search?q={$species->genus}+{$species->species}";
+ }
+
+ $wmc_url = 'https://commons.wikimedia.org/wiki/Category:' .
+  urlencode(str_replace(' ','_',$species->common_name));
+
+ $wmb_url = 'https://commons.wikimedia.org/wiki/Category:' .
+  urlencode($species->genus . '_' . $species->species);
+
+ $bnb_url = "https://www.bing.com/images/search?q=" .
+  "{$species->genus}+{$species->species}" .
+  "&qft=+filterui:license-L2_L3_L4_L5_L6_L7&FORM=IRFLTR";
+
+ $bnc_url = "https://www.bing.com/images/search?q=" .
+  "{$species->common_name}" .
+  "&qft=+filterui:license-L2_L3_L4_L5_L6_L7&FORM=IRFLTR";
+
+ $fbs_url = "https://www.fishbase.de/photos/thumbnailssummary.php?Genus=" .
+         $species->genus . "&Species=" . $species->species;
+ 
  echo <<<HTML
- <h2>Web images</h2>
- <br/>
- <table class="edged">
-
-HTML;
-
- $col = 0;
- $cols = 5;
-
- for($i = 0; $i < count($web_images); $i++) {
-  $x = $web_images[$i];
-  $thumb = $x->thumbnailUrl;
-  $page = $x->hostPageDisplayUrl;
-
-  $u = strtolower($page);
-  if (strlen($u) >= 7 && substr($u,0,7) == 'http://') {
-   $u = substr($u,7);
-  }
-  if (strlen($u) >= 8 && substr($u,0,8) == 'https://') {
-   $u = substr($u,8);
-  }
-
-  $u = str_replace('commons.wikimedia.org/wiki/file','WC',$u);
-  $u = str_replace('wikipedia.org','WP',$u);
-  $u = str_replace('wikimedia.org','WM',$u);
-  $u = str_replace('www.flickr.com/photos','FL',$u);
-  $u = str_replace('flickr.com/photos','FL',$u);
-
-  if (strlen($u) > 25) {
-   $u = substr($u,0,25);
-  }
-  
-  if (! (strlen($page) >= 4 && substr($page,0,4) == 'http')) {
-   $page = 'http://' . $page;
-  }
-
-  if ($col == 0) {
-   echo <<<HTML
-  <tr>
-
-HTML;
-  }
-
-  echo <<<HTML
-   <td id="image_td_{$i}">
-    <img id="image_img_{$i}" src="$thumb" width="200"/><br/>
-    <a href="javascript:add_image({$species->id},$i)">Add</a>
-   &nbsp;&nbsp;
-    <a target="_blank" href="$page">Page</a><br/>
-    $u
-   </td>
-
-HTML;
-
-  $col++;
-  if ($col == $cols) {
-   echo <<<HTML
-  </tr>
-
-HTML;
-   $col = 0;
-  }
- }
-
- if ($col > 0) {
-   echo <<<HTML
-  </tr>
-
-HTML;
- }
-
-echo <<<HTML
-</table>
+ <div class="tabber" id="web_images_tabber">
+  <div class="tabbertab">
+   <h2>Wikimedia (binomial)</h2>
+   <iframe id="wmb_iframe" style="width:100%; height:100%"></iframe>
+  </div>
+  <div class="tabbertab">
+   <h2>Bing (binomial)</h2>
+   <iframe id="bnb_iframe" style="width:100%; height:100%"></iframe>
+  </div>
+  <div class="tabbertab">
+   <h2>Bing (common)</h2>
+   <iframe id="bnc_iframe" style="width:100%; height:100%"></iframe>
+  </div>
+  <div class="tabbertab">
+   <h2>Wikimedia (common)</h2>
+   <iframe id="wmc_iframe" style="width:100%; height:100%"></iframe>
+  </div>
+  <div class="tabbertab">
+   <h2>Fishbase</h2>
+   <iframe id="fbs_iframe" style="width:100%; height:100%"></iframe>
+  </div>
+  <div class="tabbertab">
+   <h2>EOL</h2>
+   <iframe id="eol_iframe" style="width:100%; height:100%"></iframe>
+  </div>
+ </div>
+<script type="text/javascript" src="/js/tabber/tabber.js"></script>
+<script type="text/javascript">
+document.getElementById('wmc_iframe').src='$wmc_url';
+document.getElementById('wmb_iframe').src='$wmb_url';
+document.getElementById('bnb_iframe').src='$bnb_url';
+document.getElementById('bnc_iframe').src='$bnc_url';
+document.getElementById('fbs_iframe').src='$fbs_url';
+document.getElementById('eol_iframe').src='$eol_url';
+</script>
 </body>
 </html>
 
 HTML;
 
-}
-
-//////////////////////////////////////////////////////////////////////
-
-function image_search($query) {
- $endpoint = 'https://api.cognitive.microsoft.com/bing/v7.0/images/search';
- $accessKey = '4d7575a7714f4279b05a2082e307e49c';
-
- $headers = "Ocp-Apim-Subscription-Key: $accessKey\r\n";
- $headers .= "X-MSEdge-ClientID: 32B8829893296809258289F492666943\r\n";
-
- $options = array ('http' => array ('header' => $headers,
-				    'method' => 'GET'));
-
- $url = $endpoint;
- $url .= '?q=' . urlencode($query);
- $url .= '&imageType=Photo';
- $url .= '&minWidth=200';
- $url .= '&license=Share';
-
- $context = stream_context_create($options);
- $json = file_get_contents($url, false, $context);
- $result = json_decode($json);
-
- if ($result->_type != 'Images') {
-  return array();
- }
-
- $images = $result->value;
- return $images;
 }
 
 

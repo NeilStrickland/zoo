@@ -1,0 +1,53 @@
+body { font-size: 12px; }
+h1 { font-size: 30px; }
+h2 { font-size: 20px; }
+
+td { font-size: 12px; }
+td.command { font-size: 12px; }
+
+input[type='text'] {
+    width: 100%;
+    font-size: 12px;
+    border: 1px solid black;
+    margin-bottom: 5px;
+}
+
+div#mark_box {
+    font-size: 12px;
+    width: 95%;
+    padding: 10px;
+    border: 2px solid grey;
+    margin-bottom: 5px;
+    max-height: 100000px;
+    display: none;
+}
+
+ul.options_list {
+    list-style-type: none;
+}
+
+ul.options_list li {
+    width: 95%;
+    font-size: 12px;
+    text-decoration: none;
+    padding: 3px 0.5em;
+    margin-left: 3px;
+    margin-bottom: 2px;
+    border: 1px solid #787;
+    background: #DED;
+}
+
+ul.options_list li:hover { 
+    color: #000;
+    background: #AEA;
+    border-color: #272;
+    cursor: pointer;
+}
+
+img.main_image {
+    width: 300px;
+}
+
+img.comparison_image {
+    width: 300px;
+}

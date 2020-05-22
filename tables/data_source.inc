@@ -87,7 +87,14 @@ class data_source extends frog_object {
    return $r->genus . ' ' . $r->species;
   }
  }
+
+ function find_external_id($G,$s) {
+  // should be overridden by subclasses
+  return null;
+ }
 }
+
+//////////////////////////////////////////////////////////////////////
 
 class data_source_tol extends data_source {
  function __construct($id = null,$with_defaults=1) {
@@ -109,6 +116,8 @@ class data_source_tol extends data_source {
  }
 }
 
+//////////////////////////////////////////////////////////////////////
+
 class data_source_eol extends data_source {
  function __construct($id = null,$with_defaults=1) {
   parent::__construct($id,$with_defaults);
@@ -118,9 +127,10 @@ class data_source_eol extends data_source {
   $url = "http://eol.org/api/search/1.0.json?q={$G}+{$s}&page=1&exact=true";
   
   $json = file_get_contents($url);
+  
   $data = json_decode($json);
 
-  if (! (isset($data->totalResults) && $data->totalResults == 1)) {
+  if (! (isset($data->totalResults) && $data->totalResults > 0)) {
    return null;
   }
 
@@ -128,10 +138,25 @@ class data_source_eol extends data_source {
    return null;
   }
 
-  $result = $data->results[0];
-  return $result->id;
+  // EOL often gives more than one result, but with all results pointing
+  // to the same page.  This seems to be something to do with different
+  // authorities and different subspecies.  If all results have the same
+  // id, then we return that.  Otherwise, we give up and return null.
+  
+  $n = $data->totalResults;
+  $id = $data->results[0]->id;
+  for ($i = 1; $i < $n; $i++) {
+   $j = $data->results[$i]->id; 
+   if ($j != $id) {
+    return null;
+   }
+  }
+
+  return $id;
  }
 }
+
+//////////////////////////////////////////////////////////////////////
 
 class data_source_ws extends data_source {
  function __construct($id = null,$with_defaults=1) {
@@ -170,6 +195,8 @@ class data_source_ws extends data_source {
   return $id;
  }
 }
+
+//////////////////////////////////////////////////////////////////////
 
 class data_source_fb extends data_source {
  function __construct($id = null,$with_defaults=1) {

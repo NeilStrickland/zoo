@@ -50,7 +50,11 @@ species.random_image = function() {
 };
 
 species.image_url = function(i) {
- return '/zoo/send_image.php?id=' + i;
+ if (image_data && image_data[i]) {
+  return image_data[i];
+ } else {
+  return '/zoo/send_image.php?id=' + i;
+ }
 };
 
 species.set_src = function(e,image_id) {
@@ -75,26 +79,22 @@ species.rotate_image = function(e) {
 species.set_comparison = function(g) {
  var me = this;
  
- this.comparison_td.innerHTML = g.text;
+ this.comparison_span.innerHTML = g.text;
  g.set_src(this.comparison_img,g.random_image());
  this.comparison_img.onclick = function() {
   g.rotate_image(me.comparison_img);
  }
  this.comparison_td.style.display = 'table-cell';
- this.comparison_img_td.style.display = 'table-cell';
-}
+};
 
 species.clear_comparison = function() {
- this.comparison_td.innerHTML = '';
+ this.comparison_span.innerHTML = '';
  this.comparison_img.src = '';
  this.comparison_td.style.display = 'none';
- this.comparison_img_td.style.display = 'none';
-}
+};
 
 species.create_dom = function() {
  var li,tb,tr,td,img,me;
- var w = '200px';
- var h = '160px';
  
  li = document.createElement('li');
  this.li = li;
@@ -103,28 +103,29 @@ species.create_dom = function() {
  tb.appendChild(tr = document.createElement('tr'));
  tr.appendChild(td = document.createElement('td'));
  this.main_td = td;
- td.innerHTML = this.text;
- tr.appendChild(td = document.createElement('td'));
- this.main_img_td = td;
  td.appendChild(img = document.createElement('img'));
  this.main_img = img;
- img.style.width = '180px';
+ img.className = 'main_image';
  this.set_src(img,this.random_image());
+ td.appendChild(document.createElement('br'));
+ td.appendChild(sp = document.createElement('span'));
+ sp.innerHTML = this.text;
+
  tr.appendChild(td = document.createElement('td'));
  this.comparison_td = td;
  td.style.display = 'none';
- tr.appendChild(td = document.createElement('td'));
- this.comparison_img_td = td;
- td.style.display = 'none';
  td.appendChild(img = document.createElement('img'));
  this.comparison_img = img;
- img.width = '180';
+ img.className = 'comparison_image';
+ td.appendChild(document.createElement('br'));
+ td.appendChild(sp = document.createElement('span'));
+ this.comparison_span = sp; 
  me = this;
  this.main_img.onclick = function() {
   me.rotate_image(me.main_img);
  }
  return(li);
-}
+};
 
 //////////////////////////////////////////////////////////////////////
 
@@ -146,11 +147,14 @@ quiz.percent_good = 0;
 quiz.percent_ok   = 0;
 quiz.percent_bad  = 0;
 
-quiz.species_by_name = [];
+quiz.species_by_name = {};
 
 quiz.init = function() {
  var n,i,f,ids,id;
 
+ this.is_mobile = 
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+ 
  this.all_species = [];
  n = all_species.length;
 
@@ -161,10 +165,12 @@ quiz.init = function() {
   f.create_dom();
   this.all_species.push(f);
   this.species_by_name[f.standard_name] = f;
+  this.species_by_name[f.genus.toLowerCase() + f.species] = f;
   this.species_by_name[f.genus.toLowerCase() + ' ' + f.species] = f;
  }
 
  var ids = [
+  'tabber_div',
   'num_good_td',
   'num_ok_td',
   'num_bad_td',
@@ -173,10 +179,18 @@ quiz.init = function() {
   'percent_ok_td',
   'percent_bad_td',
   'total_percent_td',
-  'incorrect_ul',
+  'questions_div',
+  'questions_h2',
+  'ok_div',
+  'ok_h2',
   'ok_ul',
+  'incorrect_div',
+  'incorrect_h2',
+  'incorrect_ul',
   'answer_box',
+  'options_box',
   'mark_box',
+  'species_picture_div',
   'species_picture'
  ];
 
@@ -185,18 +199,95 @@ quiz.init = function() {
   this[id] = document.getElementById(id);
  }
 
+ var w = Math.max(window.innerWidth, document.documentElement.clientWidth);
+
+ if (this.is_mobile) {
+  if (w > 1000) { w = 1000; }
+ } else {
+  if (w > 500) { w = 500; }
+ }
+ 
+ this.tabber_div.style.width = '' + w + 'px';
+ var w0 = w - 30;
+ 
+ this.questions_div.style.width = '' + w0 + 'px';
+ this.ok_div.style.width        = '' + w0 + 'px';
+ this.incorrect_div.style.width = '' + w0 + 'px';
+
+ var w1 = w0 - 30;
+ var h1 = Math.round(0.75 * w1);
+ this.species_picture_div.style.width  = '' + w1 + 'px';
+ this.species_picture_div.style.height = '' + h1 + 'px';
+
+ var w2 = w1 - 30;
+ var h2 = Math.round(0.75 * w2);
+ this.species_picture.style.width  = '' + w2 + 'px';
+ this.species_picture.style.height = '' + h2 + 'px';
+ 
+ this.questions_h2.style['font-size'] = '20pt';
+ this.ok_h2.style['font-size'] = '20pt';
+ this.incorrect_h2.style['font-size'] = '20pt';
+
  this.show_question();
-}
+};
 
 quiz.show_question = function() {
+ var m,j,s;
+ 
+ var species_used = {};
+ 
  this.answer_box.value = '';
  this.mark_box.innerHTML = '';
- this.selected_id = Math.floor(Math.random() * this.all_species.length);
- this.selected_species = this.all_species[this.selected_id];
+ this.mark_box.style.display = 'none';
+ 
+ this.options = [];
+ m = this.all_species.length;
+ if (m > 6) { m = 6;}
+ for (i = 0; i < m; i++) {
+  j = Math.floor(Math.random() * this.all_species.length);
+  while (species_used[j]) {
+   j = Math.floor(Math.random() * this.all_species.length);
+  }
+  species_used[j] = 1;
+  this.options.push(this.all_species[j]);
+ }
+ j = Math.floor(Math.random() * m);
+ s = this.options[j];
+ 
+ this.selected_id = j;
+ this.selected_species = s;
  this.selected_species.set_src(this.species_picture,this.selected_species.random_image());
- this.answer_box.focus();
+ if (! this.is_mobile) {
+  this.answer_box.focus();
+ }
  this.state = 'unanswered';
+
+ this.options_ul = document.createElement('ul');
+ this.options_ul.className = 'options_list';
+ 
+ for (j = 0; j < m; j++) {
+  s = this.options[j];
+  li = document.createElement('li');
+  li.innerText = s.genus + ' ' + s.species;
+  this.set_option_handler(li);
+  this.options_ul.appendChild(li);
+ }
+
+ this.options_box.style.display = 'none';
+ this.options_box.innerHTML = '';
+ this.options_box.appendChild(this.options_ul);
+};
+
+quiz.set_option_handler = function(li) {
+ var me = this;
+ 
+ li.onclick = function() { me.use_option(li.innerText); };
 }
+
+quiz.use_option = function(s) {
+ this.answer_box.value = s;
+ this.mark_answer();
+};
 
 quiz.mark_answer = function() {
  var c,s,f;
@@ -260,10 +351,11 @@ quiz.mark_answer = function() {
   f.state = 'incorrect';
  }
  this.mark_box.innerHTML = 
-  s + '<br/><br/>' + 
+  s + '<br/>' + 
   f.linked_name + ' (' + 
   f.common_name + ')<br/>(' + 
   f.order + ', ' + f.family + ')';
+ this.mark_box.style.display = 'block';
 
  this.num_good_td.innerHTML = this.num_good;
  this.num_ok_td.innerHTML   = this.num_ok;
@@ -282,7 +374,7 @@ quiz.mark_answer = function() {
  }
 
  this.state = 'answered';
-}
+};
 
 quiz.handle_keypress = function(e) {
  var keynum;
@@ -303,7 +395,15 @@ quiz.handle_keypress = function(e) {
  } else {
   return(1);
  }
-}
+};
+
+quiz.toggle_options = function() {
+ if (this.options_box.style.display == 'none') { 
+  this.options_box.style.display = 'block';
+ } else {
+  this.options_box.style.display = 'none';
+ }
+};
 
 quiz.standardise = function(s) {
  var t;

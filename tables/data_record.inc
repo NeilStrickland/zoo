@@ -10,19 +10,28 @@ $zoo->add_table(
   'data_source_id' => array('type' => 'int','link' => 'data_source'),
   'external_id' => array('type' => 'text')
  ),
- array(),
+ array(
+  'data_source_name' => array('type' => 'text'),
+  'data_source_code' => array('type' => 'text'),
+  'species_genus' => array('type' => 'text'),
+  'species_species' => array('type' => 'text')
+ ),
  <<<SQL
 SELECT
  x.id,
  x.species_id,
+ t.genus AS species_genus, 
+ t.species AS species_species, 
  x.data_source_id,
  s.name AS data_source_name,
  s.code AS data_source_code,
  x.external_id
 FROM tbl_data_records x
- LEFT JOIN tbl_data_sources s ON x.data_source_id=s.id
+ LEFT JOIN tbl_species t ON x.species_id = t.id
+  LEFT JOIN tbl_data_sources s ON x.data_source_id=s.id
 WHERE %s
- ORDER BY s.name
+ ORDER BY s.name, t.genus, t.species
+ 
 SQL
 );
 
@@ -33,6 +42,26 @@ class data_record extends frog_object {
   parent::__construct($zoo,'data_record',$id,$with_defaults);
  }
 
+ function subclass() {
+  $subclass_name = 'data_record_' . $this->data_source_code;
+  if (class_exists($subclass_name)) {
+   $x = new $subclass_name();
+
+   $x->id = $this->id;
+   $x->species_id = $this->species_id;
+   $x->species_genus = $this->species_genus;
+   $x->species_species = $this->species_species;
+   $x->data_source_id = $this->data_source_id;
+   $x->data_source_name = $this->data_source_name;
+   $x->data_source_code = $this->data_source_code;
+   $x->external_id = $this->external_id;
+   
+   return $x; 
+  } else {
+   return $this;
+  }
+ }
+ 
  function species_page_url($r) {
   $vals = array();
   $vals['G'] = ucase_words($r->genus);
@@ -63,6 +92,10 @@ class data_record extends frog_object {
   return null;
  }
 
+ function image_url() {
+  return null;
+ }
+ 
  function linked_binomial($r) {
   $u = $this->species_page_url($r);
   if ($u) {
@@ -116,6 +149,30 @@ class data_record_eol extends data_record {
   $result = $data->results[0];
   return $result->id;
  }
+
+ function image_url() {
+  if ($this->external_id) {
+   return 'http://www.eol.org/pages/' .
+    $this->external_id . '/media?type=image';
+  } else {
+   return null;
+  }
+ }
+}
+
+class data_record_w extends data_record {
+ function __construct($id = null,$with_defaults=1) {
+  parent::__construct($id,$with_defaults);
+ }
+
+ function image_url() {
+  $id = $this->external_id;
+  if (! $id) {
+   $id = urlencode($this->species_genus + '_' + $this->species_species);
+  }
+
+  return 'https://commons.wikimedia.org/wiki/' . $id;
+ }
 }
 
 class data_record_ws extends data_record {
@@ -153,6 +210,15 @@ class data_record_ws extends data_record {
   $id = substr($url,$n);
 
   return $id;
+ }
+
+ function image_url() {
+  $id = $this->external_id;
+  if (! $id) {
+   $id = urlencode($this->species_genus + '_' + $this->species_species);
+  }
+
+  return 'https://commons.wikimedia.org/wiki/' . $id;
  }
 }
 

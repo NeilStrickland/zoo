@@ -59,6 +59,10 @@ class image extends frog_object {
   return "/zoo/send_image.php?id={$this->id}";
  }
 
+ function img() {
+  return '<img src="' . $this->url() . '"/>';
+ }
+
  function small_img() {
   return '<img width="180" src="' . $this->url() . '"/>';
  }
@@ -75,6 +79,11 @@ class image extends frog_object {
   return ((1.0 * $this->width)/($this->height));
  }
 
+ function geometry_string() {
+  return
+   sprintf("%d x %d [%1.2f]",$this->width,$this->height,$this->aspect_ratio());
+ }
+ 
  function set_size($save = false) {
   $f = $this->full_file_name();
   $is = getimagesize($f);

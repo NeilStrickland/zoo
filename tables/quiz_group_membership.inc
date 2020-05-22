@@ -18,11 +18,7 @@ $zoo->add_table(
   'species' => array('type' => 'text'),
   'binomial' => array('type' => 'text'),
   'common_name' => array('type' => 'text'),
-  'common_group' => array('type' => 'text'),
-  'eol_id' => array('type' => 'text'),
-  'fishbase_id' => array('type' => 'text'),
-  'wikipedia_url' => array('type' => 'text'),
-  'photo' => array('type' => 'text')
+  'common_group' => array('type' => 'text')
  ),
  <<<SQL
 SELECT
@@ -37,11 +33,7 @@ SELECT
  s.species,
  CONCAT(s.genus,' ',s.species) AS binomial,
  s.common_name,
- s.common_group,
- s.eol_id,
- s.fishbase_id,
- s.wikipedia_url,
- s.photo
+ s.common_group
 FROM tbl_quiz_group_memberships x
  LEFT JOIN tbl_quiz_groups g ON x.quiz_group_id = g.id
   LEFT JOIN tbl_species s ON x.species_id = s.id
@@ -57,34 +49,15 @@ class quiz_group_membership extends frog_object {
   parent::__construct($zoo,'quiz_group_membership',$id,$with_defaults);
  }
 
- function fishbase_url() {
-  if ($this->fishbase_id) {
-   return 'http://www.fishbase.org/summary/'.
-    $this->fishbase_id;
-  } else {
-   return '';
-  }
- }
+ function wiki_url() {
+  global $zoo;
 
- function eol_url() {
-  if ($this->eol_id) {
-   return 'http://www.eol.org/pages/'.
-    $this->eol_id;
-  } else {
-   return '';
-  }
+  return $zoo->wiki_url($this->genus,$this->species);
  }
 
  function info_url() {
-  if ($this->fishbase_id) {
-   return $this->fishbase_url();
-  } else if ($this->eol_id) {
-   return $this->eol_url();
-  } else if ($this->wikipedia_url) {
-   return $this->wikipedia_url;
-  } else {
-   return '';
-  }
+  // Should be improved to use data records
+  return $this->wiki_url();
  }
 
  function linked_binomial() {

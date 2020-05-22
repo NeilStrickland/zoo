@@ -18,57 +18,77 @@ function get_params() {
  global $zoo;
  $params = new stdClass();
 
- $w = <<<SQL
+ $params->standard_aspect_ratio = 1.3333;
+ $params->standard_height = 600;
+ $params->standard_width = round($params->standard_aspect_ratio *
+				 $params->standard_height);
+
+ $r_min = $params->standard_aspect_ratio - 0.01;
+ $r_max = $params->standard_aspect_ratio + 0.01;
+ 
+ $params->id = (int) get_optional_parameter('id',0);
+
+ if ($params->id) {
+  $params->image = $zoo->load('image',$params->id);
+  $params->image->set_size(1);
+  $params->image->load_object();
+  $params->image_url  = $params->image->url();
+  $params->image_file = $params->image->full_file_name();
+
+  $params->next_image = null;
+  $params->previous_image = null;
+  $params->bad_images = array();
+ } else {
+  $w = <<<SQL
 x.width IS NULL OR x.height IS NULL OR
 x.width = 0 OR x.height = 0 OR
-x.width < 1.32 * x.height OR x.width > 1.34 * x.height
+x.width < $r_min * x.height OR x.width > $r_max * x.height
   
 SQL;
  
- $params->bad_images =
-  $zoo->load_where_ordered('images',$w,'id');
+  $params->bad_images =
+   $zoo->load_where_ordered('images',$w,'id');
 
- if (! $params->bad_images) {
-  no_bad_images_page($params);
-  exit;
- }
-
- $params->bad_images_by_id =
-  make_index($params->bad_images,'id');
-
- $params->id = (int) get_optional_parameter('id',0);
- if (! $params->id) {
-  $params->id = $params->bad_images[0]->id;
- }
-
- if (! isset($params->bad_images_by_id[$params->id])) {
-  $params->id = $params->bad_images[0]->id;
- }
- 
- $params->image = $params->bad_images_by_id[$params->id];
- $params->image->set_size(1);
- $params->image->load_object();
-
- $params->image_url  = $params->image->url();
- $params->image_file = $params->image->full_file_name();
-
- $ni = 0;
- $pi = 0;
- $id = $params->id;
- 
- foreach($params->bad_images as $x) {
-  if ($x->id < $id && (($pi == 0) || ($x->id > $pi))) {
-   $pi = $x->id;
+  if (! $params->bad_images) {
+   no_bad_images_page($params);
+   exit;
   }
 
-  if ($x->id > $id && (($ni == 0) || ($x->id < $ni))) {
-   $ni = $x->id;
+  $params->id = $params->bad_images[0]->id;
+  
+  $params->bad_images_by_id =
+   make_index($params->bad_images,'id');
+
+  if (! isset($params->bad_images_by_id[$params->id])) {
+   $params->id = $params->bad_images[0]->id;
   }
+ 
+  $params->image = $params->bad_images_by_id[$params->id];
+  $params->image->set_size(1);
+  $params->image->load_object();
+
+  $params->image_url  = $params->image->url();
+  $params->image_file = $params->image->full_file_name();
+
+  $ni = 0;
+  $pi = 0;
+  $id = $params->id;
+ 
+  foreach($params->bad_images as $x) {
+   if ($x->id < $id && (($pi == 0) || ($x->id > $pi))) {
+    $pi = $x->id;
+   }
+
+   if ($x->id > $id && (($ni == 0) || ($x->id < $ni))) {
+    $ni = $x->id;
+   }
+  }
+
+  $params->next_image = $ni;
+  $params->previous_image = $pi;
+
  }
-
- $params->next_image = $ni;
- $params->previous_image = $pi;
-
+ 
  $params->command = get_restricted_parameter('command',
 					     array('load_image','apply_fix'),
 					     'load_image');
@@ -80,6 +100,7 @@ SQL;
 function choose_fix($params) {
  global $zoo;
 
+ preshrink($params);
  $image = $params->image;
  $img = $image->object;
 
@@ -223,6 +244,30 @@ HTML;
 
 //////////////////////////////////////////////////////////////////////
 
+function preshrink($params) {
+ $img = $params->image;
+ $io = $img->object;
+ 
+ $w0 = imagesx($io);
+ $h0 = imagesy($io);
+
+ $max_width = 1000.0;
+ $max_height = 0.75 * $max_width;
+ $ratio = max($w0 / $max_width, $h0 / $max_height);
+ if ($ratio > 1) {
+  $w1 = (int) ($w0 / $ratio);
+  $h1 = (int) ($h0 / $ratio);
+  $scaled_image = imagescale($io,$w1,$h1);
+  $img->width = $w1;
+  $img->height = $h1;
+  $img->save();
+  imagejpeg($scaled_image,$params->image_file);
+  $img->object = $scaled_image;
+ }
+}
+
+//////////////////////////////////////////////////////////////////////
+
 function apply_fix($params) {
  global $zoo;
 
@@ -240,15 +285,23 @@ function apply_fix($params) {
   # pad the image
  }
 
- $cropped_image = imagecreatetruecolor(400,300);
- imagecopyresampled($cropped_image,$img,0,0,$cx,$cy,400,300,$cw,$ch);
+ if ($ch >= $params->standard_height) {
+  $h1 = $params->standard_height;
+  $w1 = $params->standard_width;
+ } else {
+  $h1 = $ch;
+  $w1 = $cw;
+ }
+ 
+ $cropped_image = imagecreatetruecolor($w1,$h1);
+ imagecopyresampled($cropped_image,$img,0,0,$cx,$cy,$w1,$h1,$cw,$ch);
 
  $new_file_name = "pictures/image_{$params->id}_fixed.jpg";
  $new_url = $new_file_name;
  
  imagejpeg($cropped_image,$params->image_file);
- $params->image->width  = 400;
- $params->image->height = 300;
+ $params->image->width  = $w1;
+ $params->image->height = $h1;
  $params->image->save();
  $u = $params->image_url . '?t=' . time();
 

@@ -68,12 +68,15 @@ class quiz_group extends frog_object {
    $this->load_members();
   }
 
-  if (! isset($this->members_by_species_id[$species_id])) {
+  if (isset($this->members_by_species_id[$species_id])) {
+   return 0;
+  } else {
    $m = $zoo->new_object('quiz_group_membership');
    $m->quiz_group_id = $this->id;
    $m->species_id = $species_id;
    $m->save();
    $this->load_members();
+   return 1;
   }
  }
 
@@ -91,6 +94,7 @@ class quiz_group extends frog_object {
   }  
  }
 
+ // Returns 0 if not found, 1 if already present, 2 if new
  function add_member_by_name($g,$s) {
   global $zoo;
   
@@ -100,21 +104,44 @@ class quiz_group extends frog_object {
 
   $x = $zoo->find_species($g,$s);
   if ($x) {
-   $this->add_member($x->id);
-   return 1;
+   $y = $this->add_member($x->id);
+   return 1 + $y; 
   } else {
    return 0;
   }
  }
 
  function add_members_from_file($file) {
+  $x = new stdClass;
+  $x->not_found = array();
+  $x->already_present = array();
+  $x->newly_added = array();
+
+  $handle = fopen($file,'r');
+
+  if ($handle === FALSE) {
+   return null;
+  }
+  
   $lines = explode("\n",file_get_contents($file));
-  foreach($lines as $line) {
-   $fields = explode(",",trim($line));
-   if (count($fields) == 2) {
-    $this->add_member_by_name($fields[0],$fields[1]);
+  while(($fields = fgetcsv($handle)) !== FALSE) {
+   if (count($fields) >= 2) {
+    $y = new stdClass;
+    $y->genus = $fields[0];
+    $y->species = $fields[1];
+    $y->status = $this->add_member_by_name($y->genus,$y->species);
+
+    if ($y->status == 0) {
+     $x->not_found[] = $y;
+    } else if ($y->status == 1) {
+     $x->already_present[] = $y;
+    } else {
+     $x->newly_added[] = $y;
+    }
    }
   }
+
+  return $x;
  }
 }
 

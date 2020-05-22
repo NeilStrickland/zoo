@@ -73,7 +73,7 @@ frog.object.load = function() {
  try {
   xhr.send(null);
  } catch(e) {
-  alert('frog.object.load: Could not send XMLHttpRequest object to connect to server');
+  alert('frog.object.load: Could not send XMLHttpRequest object to server');
   return(null);
  }
 
@@ -129,7 +129,7 @@ frog.object.insert = function() {
  try {
   xhr.send(null);
  } catch(e) {
-  alert('frog.object.insert: Could not send XMLHttpRequest object to connect to server');
+  alert('frog.object.insert: Could not send XMLHttpRequest object to server');
   return(null);
  }
 
@@ -181,7 +181,7 @@ frog.object.update = function() {
  try {
   xhr.send(null);
  } catch(e) {
-  alert('frog.object.insert: Could not send XMLHttpRequest object to connect to server');
+  alert('frog.object.insert: Could not send XMLHttpRequest object to server');
   return(null);
  }
 
