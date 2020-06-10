@@ -1,6 +1,6 @@
 <?php
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 
 $params = get_params();
 
@@ -18,6 +18,8 @@ function get_params() {
  global $zoo;
  $params = new stdClass();
 
+ $params->missing_file = 0;
+ 
  $params->standard_aspect_ratio = 1.3333;
  $params->standard_height = 600;
  $params->standard_width = round($params->standard_aspect_ratio *
@@ -30,10 +32,23 @@ function get_params() {
 
  if ($params->id) {
   $params->image = $zoo->load('image',$params->id);
-  $params->image->set_size(1);
-  $params->image->load_object();
+  if (! $params->image) {
+   error_page('Image does not exist');
+   exit;
+  }
+  
   $params->image_url  = $params->image->url();
   $params->image_file = $params->image->full_file_name();
+
+  if (! file_exists($params->image_file)) {
+   $params->image->delete();
+   $params->missing_image = 1;
+   error_page('The image file does not exist so the image record was deleted');
+   exit;
+  }
+  
+  $params->image->set_size(1);
+  $params->image->load_object();
 
   $params->next_image = null;
   $params->previous_image = null;
@@ -158,8 +173,9 @@ function choose_fix($params) {
  echo <<<HTML
 <html>
 <head>
-  <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
-  <script type="text/javascript" src="fix_image.js"></script>
+  <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
+  <script type="text/javascript" src="js/frog.js"></script>
+  <script type="text/javascript" src="js/fix_image.js"></script>
 </head>
 <body onload="fixer.init($x,$y,$w,$h,$x0,$y0,$w0,$h0,$ww,$hh,$ar)">
 <div id="main_div">
@@ -236,6 +252,12 @@ HTML;
 <input type="hidden" name="crop_h" value="0">
 </form>
 </div>
+<br/><br/>
+<table>
+ <tr>
+  <td class="command" onclick="fixer.delete_image()">Delete image</td>
+ </tr>
+</table>
 </body>
 </html>
 
@@ -311,7 +333,7 @@ function apply_fix($params) {
  echo <<<HTML
 <html>
 <head>
- <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+ <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
  <script type="text/javascript">
 var previous_image = $pi;
 var next_image = $ni;
