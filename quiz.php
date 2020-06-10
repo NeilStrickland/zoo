@@ -1,6 +1,6 @@
 <?php
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 require_once('../include/Mobile_Detect.inc');
 
 $quiz_group_id =
@@ -37,30 +37,86 @@ function choose_quiz() {
 
  $quizzes = $zoo->load_all('quiz_groups');
 
- echo <<<HTML
-<html>
-<head>
-</head>
-<body>
- <table>
+ $script = <<<JS
 
-HTML;
+function do_command(c,id) {
+ window.open('quiz.php?id=' + id + '&command=' + c);
+}
+
+JS;
+ 
+ $zoo->nav->header('All quizzes',array('inline_script' => $script));
+
+ echo <<<HTML
+<body>
+ <h1>All quizzes</h1>
+ <br/>
+HTML
+;
+
+ $detect = new Mobile_Detect;
+
+ if ($detect->isMobile()) {
+ echo <<<HTML
+ <table width="100%" class="edged">
+
+HTML
+  ;
 
  foreach($quizzes as $q) {
   echo <<<HTML
   <tr>
-   <td><a href="quiz.php?id={$q->id}">{$q->name}</a></td>
+   <td colspan="4">{$q->name}</td>
+  </tr>
+  <tr>
+   <td width="25%" class="command" onclick="do_command('try',{$q->id})">Try</td>
+   <td width="25%" class="command" onclick="do_command('offline',{$q->id})">Offline</td>
+   <td width="25%" class="command" onclick="do_command('view',{$q->id})">View</td>
+   <td width="25%" class="command" onclick="do_command('view_missing',{$q->id})">Add images</td>
   </tr>
 
-HTML;
+HTML
+;
  }
 
  echo <<<HTML
  </table>
-</body>
-</html>
 
 HTML;
+ } else {
+ echo <<<HTML
+ <table class="edged">
+
+HTML
+;
+
+ foreach($quizzes as $q) {
+  echo <<<HTML
+  <tr>
+   <td width="300">{$q->name}</td>
+   <td class="command" onclick="do_command('try',{$q->id})">Try</td>
+   <td class="command" onclick="do_command('offline',{$q->id})">Offline</td>
+   <td class="command" onclick="do_command('view',{$q->id})">View</td>
+   <td class="command" onclick="do_command('view_missing',{$q->id})">Add images</td>
+  </tr>
+
+HTML
+;
+ }
+
+ echo <<<HTML
+ </table>
+
+HTML
+  ;
+ }
+ 
+ echo <<<HTML
+</body>
+
+HTML;
+
+ $zoo->nav->footer();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -92,12 +148,12 @@ function try_quiz($group,$offline = false) {
  if ($offline) {
   header('Content-Type: application/octet-stream');
   header('Content-Disposition: attachment; filename="' . $group->name . '.html"');
-  $tabber_css = wrap_style(file_get_contents('d:/wamp/www/js/tabber/tabber.css'));
-  $zoo_css    = wrap_style(file_get_contents('zoo.css'));
-  $quiz_css   = wrap_style(file_get_contents('quiz_mobile.css'));
+  $tabber_css = wrap_style(file_get_contents('css/tabber.css'));
+  $zoo_css    = wrap_style(file_get_contents('css/zoo.css'));
+  $quiz_css   = wrap_style(file_get_contents('css/quiz_mobile.css'));
               
-  $tabber_js = wrap_script(file_get_contents('d:/wamp/www/js/tabber/tabber.js'));
-  $quiz_js = wrap_script(file_get_contents('quiz.js'));
+  $tabber_js  = wrap_script(file_get_contents('js/tabber.js'));
+  $quiz_js    = wrap_script(file_get_contents('js/quiz.js'));
   
  } else {
   $tabber_css = <<<HTML
@@ -106,29 +162,29 @@ function try_quiz($group,$offline = false) {
 HTML;
 
   $zoo_css = <<<HTML
-<link rel="stylesheet" href="zoo.css" type="text/css"/>
+<link rel="stylesheet" href="css/zoo.css" type="text/css"/>
 
 HTML;
 
   if ($detect->isMobile()) {
    $quiz_css = <<<HTML
-<link rel="stylesheet" href="quiz_mobile.css" type="text/css"/>
+<link rel="stylesheet" href="css/quiz_mobile.css" type="text/css"/>
 
 HTML;
   } else {
   $quiz_css = <<<HTML
-<link rel="stylesheet" href="quiz_desktop.css" type="text/css"/>
+<link rel="stylesheet" href="css/quiz_desktop.css" type="text/css"/>
 
 HTML;
   }
 
   $tabber_js = <<<HTML
-<script type="text/javascript" src="/js/tabber/tabber.js"></script>
+<script type="text/javascript" src="js/tabber.js"></script>
 
 HTML;
 
   $quiz_js = <<<HTML
-<script type="text/javascript" src="quiz.js"></script>
+<script type="text/javascript" src="js/quiz.js"></script>
 
 HTML;
   
@@ -137,7 +193,7 @@ HTML;
  echo <<<HTML
 <html>
 <head>
-<meta name="viewport" content="width=device-width,initial_scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{$group->name}</title>
 {$tabber_css}
 {$zoo_css}
@@ -227,15 +283,15 @@ HTML;
   <div id="species_picture_div" style="width: 400px; overflow: hidden;">
    <img id="species_picture" width="400px" src=""/>
   </div>
-  <br/><br/>
+  <br/>
   <div>
    Name: <br/>
    <input type="text" onkeypress="return quiz.handle_keypress(event)" id="answer_box"/>
-   <br/><br/>
+   <br/>
    <table style="width:100%">
     <tr>
-     <td class="command" style="width:50%" onclick="quiz.toggle_options()">Options</td>
-     <td class="command" style="width:50%" onclick="quiz.show_question()">Next question</td>
+     <td class="command" style="width:50%; height:30px;" onclick="quiz.toggle_options()">Options</td>
+     <td class="command" style="width:50%; height:30px;" onclick="quiz.show_question()">Next question</td>
     </tr>
    </table>
   </div>
@@ -301,6 +357,8 @@ function view_quiz($group,$command) {
 
   $all_species = $group->load_members();
 
+  $n0 = count($all_species);
+  
   $ss = array();
   foreach($all_species as $s) {
    $no_images = 1;
@@ -317,18 +375,34 @@ function view_quiz($group,$command) {
    }
   }
 
+  $n1 = count($ss);
+  $n2 = $n0 - $n1;
+
+  $count_msg = <<<HTML
+<br/>
+This quiz has $n0 species.  Of these, $n1 have no images (or have images that need processing).  
+<br/>
+
+HTML;
+  
   $all_species = $ss;
  } else {
+
+  $count_msg = '';
+  
+  if ($command == 'view') {
+   $zoo->attach_images(1);
+  }
   $all_species = $group->load_members();
  }
  
  echo <<<HTML
 <html>
 <head>
-<script type="text/javascript" src="frog.js"></script>
-<script type="text/javascript" src="http://localhost/js/tabber/tabber.js"></script>
-<link rel="stylesheet" href="http://localhost/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
-<link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+<script type="text/javascript" src="js/frog.js"></script>
+<script type="text/javascript" src="js/tabber.js"></script>
+<link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
+<link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
 <script type="text/javascript">
  
 function remove_membership(id) {
@@ -361,6 +435,7 @@ function find_images(i,g,s) {
 </head>
 <body>
 <h1>{$group->name}</h1>
+$count_msg
 <div class="tabber">
  <div class="tabbertab">
   <h2>Included species</h2>
