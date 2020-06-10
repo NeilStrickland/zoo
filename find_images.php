@@ -1,6 +1,6 @@
 <?php
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 
 $id = (int) get_optional_parameter('id',0);
 
@@ -62,8 +62,8 @@ function find_images_for($species) {
 <head>
  <title>{$species->binomial}</title>
  <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
- <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
- <script type="text/javascript" src="find_images.js"></script>
+ <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
+ <script type="text/javascript" src="js/find_images.js"></script>
 </head>
 <body>
  <h1>{$species->binomial} ({$species->common_name})</h1>
@@ -134,7 +134,7 @@ HTML;
   $r = $species->data_records_by_code['eol'];
   $eol_url = $r->image_url();
  } else {
-  $eol_url="http://www.eol.org/search?q={$species->genus}+{$species->species}";
+  $eol_url="https://eol.org/search?q={$species->genus}+{$species->species}";
  }
 
  $wmc_url = 'https://commons.wikimedia.org/wiki/Category:' .

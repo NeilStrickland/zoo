@@ -2,7 +2,7 @@
 
 //header('Content-type: text/plain');
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 
 $params = get_params();
 

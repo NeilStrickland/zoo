@@ -1,6 +1,6 @@
 <?php
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 
 $species = $zoo->load_where('species',"(x.common_name IS NULL OR x.common_name='')");
 

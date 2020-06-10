@@ -1,6 +1,6 @@
 <?php
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 
 $images = $zoo->load_all('images');
 $images_by_file_name = make_index($images,'file_name');

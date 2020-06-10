@@ -1,6 +1,6 @@
 <?php
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 
 $command = get_restricted_parameter('command',array('preview','save'),'preview');
 $fetch   = get_optional_parameter('fetch',0) ? 1 : 0;
@@ -27,7 +27,7 @@ echo <<<HTML
  <head>
   <title>Wiki taxa</title>
   <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
-  <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+  <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
  </head>
  <body>
   <h1>Wiki taxa</h1>

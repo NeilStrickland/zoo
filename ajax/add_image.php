@@ -1,6 +1,6 @@
 <?php
 
-require_once('../zoo.inc');
+require_once('../include/zoo.inc');
 
 $species_id = (int) get_required_parameter('species_id');
 $url = get_required_parameter('url');
