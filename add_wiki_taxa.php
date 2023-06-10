@@ -26,7 +26,7 @@ echo <<<HTML
 <html>
  <head>
   <title>Wiki taxa</title>
-  <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
+  <link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
   <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
  </head>
  <body>

@@ -61,7 +61,7 @@ function find_images_for($species) {
 <html>
 <head>
  <title>{$species->binomial}</title>
- <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
+ <link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
  <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
  <script type="text/javascript" src="js/find_images.js"></script>
 </head>

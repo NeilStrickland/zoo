@@ -41,8 +41,8 @@ function choose_file_page($params) {
 <html>
  <head>
   <title>Add species</title>
-  <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
-  <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+  <link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
+  <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
  </head>
  <body>
   <h1>Add species to database</h1>
@@ -195,8 +195,8 @@ function report_page($params) {
 <html>
 <head>
 <title>Species added</title>
-<link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
-<link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+<link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
+<link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
 </head>
 <body>
 
