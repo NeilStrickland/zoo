@@ -36,6 +36,9 @@ SQL
 );
 
 class data_record extends frog_object {
+ public $id,$species_id,$species_genus,$species_species,
+  $data_source_id,$data_source_name,$data_source_code,$external_id;
+
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
 
@@ -64,9 +67,9 @@ class data_record extends frog_object {
  
  function species_page_url($r) {
   $vals = array();
-  $vals['G'] = ucase_words($r->genus);
+  $vals['G'] = ucwords($r->genus);
   $vals['g'] = strtolower($vals['G']);
-  $vals['S'] = ucase_words($r->species);
+  $vals['S'] = ucwords($r->species);
   $vals['s'] = strtolower($vals['S']);
   $vals['i'] = $r->external_id;
 

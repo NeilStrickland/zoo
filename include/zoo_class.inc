@@ -1,6 +1,11 @@
 <?php
 
 class zoo_class extends frog {
+ public
+  $species_index,$all_species,$data_sources,$data_sources_by_code,$data_sources_by_name,
+  $temp_images_dir,$data_dir,$image_dir,$image_url,$image_url_base,
+  $global_data_dir,$original_images_dir,$html,$nav;
+
  function make_species_index($force = 0) {
 
   if (isset($this->species_index) && ! $force) {

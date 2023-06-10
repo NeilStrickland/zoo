@@ -35,6 +35,10 @@ SQL
 );
 
 class species extends frog_object {
+ public $id,$object,$class,$order,$family,$genus,$species,$binomial,
+  $common_name,$common_group,$images,$data_records,$data_records_by_source,
+  $data_records_by_code;
+  
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
 

@@ -44,6 +44,9 @@ SQL
 );
 
 class image extends frog_object {
+ public $id,$object,$species_id,$file_name,$width,$height,
+  $class,$order,$family,$genus,$species,$binomial,$common_name,$common_group;
+
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
 

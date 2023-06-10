@@ -130,13 +130,13 @@ function handle_upload($params) {
  $quiz->load_members();
 
  if (! isset($_FILES['species_file'])) {
-  $zoo->error_page('No file specified'); exit;
+  error_page('No file specified'); exit;
  }
 
  $F = $_FILES['species_file'];
 
  if ($F['error'] != UPLOAD_ERR_OK) {
-  $zoo->error_page('File upload error'); exit;
+  error_page('File upload error'); exit;
  }
 
  $x = $quiz->add_members_from_file($F['tmp_name']);

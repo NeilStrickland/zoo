@@ -86,19 +86,19 @@ function parse_file($params) {
  global $zoo;
  
  if (! isset($_FILES['species_file'])) {
-  $zoo->error_page('No file specified'); exit;
+  error_page('No file specified'); exit;
  }
 
  $F = $_FILES['species_file'];
 
  if ($F['error'] != UPLOAD_ERR_OK) {
-  $zoo->error_page('File upload error'); exit;
+  error_page('File upload error'); exit;
  }
 
  $handle = fopen($F['tmp_name'],'r');
 
  if ($handle === FALSE) {
-  $zoo->error_page('Error opening uploaded file'); exit;
+  error_page('Error opening uploaded file'); exit;
  }
 
  $params->species_to_add = array();

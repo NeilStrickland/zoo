@@ -43,6 +43,9 @@ SQL
 );
 
 class quiz_group_membership extends frog_object {
+ public $id,$object,$quiz_group_id,$species_id,$quiz_group_name,
+  $class,$order,$family,$genus,$species,$binomial,$common_name,$common_group;
+  
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
 
