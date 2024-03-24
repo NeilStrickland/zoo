@@ -106,7 +106,6 @@ species.create_dom = function() {
  td.appendChild(img = document.createElement('img'));
  this.main_img = img;
  img.className = 'main_image';
- this.set_src(img,this.random_image());
  td.appendChild(document.createElement('br'));
  td.appendChild(sp = document.createElement('span'));
  sp.innerHTML = this.text;
