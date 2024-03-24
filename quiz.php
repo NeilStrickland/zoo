@@ -157,7 +157,7 @@ function try_quiz($group,$offline = false) {
   
  } else {
   $tabber_css = <<<HTML
-<link rel="stylesheet" href="/js/tabber/tabber.css" type="text/css"/>
+<link rel="stylesheet" href="css/tabber.css" type="text/css"/>
 
 HTML;
 

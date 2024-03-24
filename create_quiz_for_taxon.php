@@ -1,12 +1,14 @@
 <?php
 
-require_once('zoo.inc');
+require_once('include/zoo.inc');
 
 $params = get_params();
 
 if ($params->level && $params->taxon) {
  create_quiz($params);
  report_result($params);
+} else {
+ choose_taxon_page($params);
 }
 
 exit;
@@ -17,12 +19,38 @@ function get_params() {
  global $zoo;
  $params = new stdClass();
 
- $params->levels = array('class','order','family','genus','common_group');
+ $params->levels = array('class','order','family','common_group');
  $params->level =
   get_restricted_parameter('level',$params->levels,'family');
  $params->taxon = get_optional_parameter('taxon','');
 
  return $params;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+function choose_taxon_page($params) {
+ global $zoo;
+
+ $taxa = array();
+ 
+ foreach($params->levels as $l) {
+  $q = <<<SQL
+SELECT DISTINCT {$l} AS n FROM tbl_species ORDER BY {$l}
+       
+SQL
+  ;
+  $xx = $zoo->get_all($q);
+  $taxa[$l] = array();
+  foreach($xx as $x) {
+   $taxa[$l][] = $x->n;
+  }
+ }
+
+ echo <<<HTML
+
+HTML;
+ 
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -1,6 +1,8 @@
 <?php
 
 class zoo_navigator extends frog_navigator {
+ public $base_url;
+ 
  function __construct() {
   global $zoo;
 

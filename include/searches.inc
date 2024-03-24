@@ -38,7 +38,7 @@ function eol_image_search($eol_id) {
   "sounds_per_page=0&sound_page=0&" .
   "&texts_per_page=0&texts_page=0&" .
   "licenses=cc-by|cc-by-nc|cc-by-sa|cc-by-nc-sa&" .
-  "&id=$id";
+  "&id=$eol_id";
 
  $json = file_get_contents($url);
  $data = json_decode($json);

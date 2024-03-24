@@ -34,8 +34,8 @@ echo <<<HTML
 <html>
  <head>
   <title>Common names</title>
-  <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
-  <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+  <link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
+  <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
   <script type="text/javascript" src="frog.js"></script>
   <script type="text/javascript" src="objects_auto.js"></script>
   <script type="text/javascript" src="zoo.js"></script>

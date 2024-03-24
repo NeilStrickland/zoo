@@ -61,8 +61,8 @@ function choose_file_page($params) {
 <html>
  <head>
   <title>Add to quiz</title>
-  <link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
-  <link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+  <link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
+  <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
  </head>
  <body>
   <h1>Add species to quiz</h1>
@@ -130,13 +130,13 @@ function handle_upload($params) {
  $quiz->load_members();
 
  if (! isset($_FILES['species_file'])) {
-  $zoo->error_page('No file specified'); exit;
+  error_page('No file specified'); exit;
  }
 
  $F = $_FILES['species_file'];
 
  if ($F['error'] != UPLOAD_ERR_OK) {
-  $zoo->error_page('File upload error'); exit;
+  error_page('File upload error'); exit;
  }
 
  $x = $quiz->add_members_from_file($F['tmp_name']);
@@ -145,8 +145,8 @@ function handle_upload($params) {
 <html>
 <head>
 <title>Species added</title>
-<link rel="stylesheet" href="/js/tabber/tabber.css" TYPE="text/css" MEDIA="screen"/>
-<link rel="stylesheet" href="zoo.css" TYPE="text/css"/>
+<link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
+<link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
 </head>
 <body>
 

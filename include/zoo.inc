@@ -11,11 +11,20 @@ $zoo = new zoo_class();
 $zoo->name = 'zoo';
 $zoo->include_dir = dirname(__FILE__);
 
-$zoo->data_dir = getenv('DATADIR') . "/zoo";
+$zoo->global_data_dir = getenv('DATADIR');
+if (! $zoo->global_data_dir) {
+ $zoo->global_data_dir = realpath($_SERVER['DOCUMENT_ROOT'] . '/../data');
+}
 
-$cred = trim(file_get_contents($zoo->data_dir . '/cred.txt'));
-$zoo->connect('zoo',$cred,'zoo');
-$cred = '';
+$zoo->data_dir = $zoo->global_data_dir . "/zoo";
+$cred = json_decode(trim(file_get_contents($zoo->data_dir . '/cred.txt')));
+$zoo->db_name = isset($cred->db_name) ? $cred->db_name : 'zoo';
+$db_user = isset($cred->db_user) ? $cred->db_user : 'zoo';
+$db_pass = $cred->db_pass;
+$zoo->connect($db_user,$db_pass);
+$cred = null;
+$db_user = null;
+$db_pass = null;
 
 $zoo->image_dir           = $zoo->data_dir . "/images";
 $zoo->original_images_dir = $zoo->data_dir . '/original_images';
