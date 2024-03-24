@@ -11,7 +11,8 @@ $zoo = new zoo_class();
 $zoo->name = 'zoo';
 $zoo->include_dir = dirname(__FILE__);
 
-$zoo->data_dir = "D:/wamp/data/zoo";
+$zoo->data_dir = getenv('DATADIR') . "/zoo";
+
 $cred = trim(file_get_contents($zoo->data_dir . '/cred.txt'));
 $zoo->connect('zoo',$cred,'zoo');
 $cred = '';
