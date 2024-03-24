@@ -5,7 +5,7 @@ global $zoo;
 $zoo->add_table(
  'data_record','data_records',		
  array(		
-  'id' => array('type' => 'integer','notnull' => 'true'),
+  'id' => array('type' => 'integer','notnull' => true),
   'species_id' => array('type' => 'int','link' => 'species'),
   'data_source_id' => array('type' => 'int','link' => 'data_source'),
   'external_id' => array('type' => 'text')
