@@ -6,6 +6,8 @@ $zoo->add_table(
  'species','species',		
  array(		
   'id' => array('type' => 'integer','notnull' => 'true'),
+  'kingdom' => array('type' => 'text'),
+  'phylum' => array('type' => 'text'),
   'class' => array('type' => 'text'),
   'order' => array('type' => 'text'),
   'family' => array('type' => 'text'),
@@ -20,6 +22,8 @@ $zoo->add_table(
  <<<SQL
 SELECT
  x.id,
+ x.kingdom,
+ x.phylum,
  x.class,
  x.order,
  x.family,
@@ -35,9 +39,9 @@ SQL
 );
 
 class species extends frog_object {
- public $id,$object,$class,$order,$family,$genus,$species,$binomial,
-  $common_name,$common_group,$images,$data_records,$data_records_by_source,
-  $data_records_by_code;
+ public $id,$object,$kingdom,$phylum,$class,$order,$family,$genus,$species,
+  $binomial,$common_name,$common_group,$images,
+  $data_records,$data_records_by_source,$data_records_by_code;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
