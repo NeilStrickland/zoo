@@ -341,6 +341,69 @@ class zoo_class extends frog {
    $s->delete();
   }
  } 
+
+ function tabulate_taxa() {
+  $taxa = $this->load_all('taxa');
+  $taxa_index = [];
+  foreach($taxa as $t) {
+   $t->is_new = false;
+   if (! isset($taxa_index[$t->rank])) {
+    $taxa_index[$t->rank] = [];
+   }
+   $taxa_index[$t->rank][$t->name] = $t;
+  }
+
+  $new_taxa = [];
+  $species = $this->load_all('species');
+  $ranks = taxon::$ranks;
+  $nr = count($ranks);
+  foreach($species as $s) {
+   for($k = 0; $k < $nr; $k++) {
+    $r = $ranks[$k];
+    $n = $s->$r;
+    if ($n && ! isset($taxa_index[$r][$n])) {
+     $t = $this->new_object('taxon');
+     $t->rank = $r;
+     $t->name = $n;
+     $t->is_new = true;
+     $t->save();
+     $taxa_index[$r][$n] = $t;
+     $taxa[] = $t;
+     $new_taxa[] = $t;
+    }
+   }
+  }
+
+  foreach($taxa as $t) {
+   $t->new_parent_id = null;
+   if ($t->rank_number() > 0 && ! $t->parent_id) {
+    $x = $t->find_parent();
+    if (! $x->error) {
+     $t->parent_id = $x->parent_id;
+     $t->new_parent_id = $x->parent_id;
+     $t->save();
+    }
+   }
+  }
+
+  return $taxa;
+ }
+
+ function taxa_tree() {
+  $taxa = $this->load_all('taxa');
+  $tree = [];
+
+  foreach($taxa as $t) {
+   $t->load_children();
+   if (! $t->children) {
+    $tree[] = $t->chain();
+   }
+  }
+
+  usort($tree, array('taxon', 'compare_chains'));
+
+  return $tree;
+ }
 }
 
 ?>
