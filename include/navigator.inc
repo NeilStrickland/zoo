@@ -20,5 +20,27 @@ class zoo_navigator extends frog_navigator {
   
   $this->standard_scripts = array('zoo','objects_auto');
   $this->standard_styles  = array('zoo');
+
+  $this->standard_body_scripts = array(
+   'autosuggest_setup'
+  );
+ }
+
+ function top_menu() {
+  $html = "<div class=\"topmenu\">";
+
+  $html .= <<<HTML
+<button type="button" onclick="document.location='index.php'">Home</button>
+<button type="button" onclick="document.location='quiz.php'">Try quiz</button>
+<button type="button" onclick="document.location='quiz_list.php'">Manage quizzes</button>
+<button type="button" onclick="document.location='species_list.php'">Species</button>
+<button type="button" onclick="document.location='find_images.php'">Images</button>
+<button type="button" onclick="document.location='data_source_list.php'">Data sources</button>
+
+HTML
+        ;
+
+  $html .= "</div>";
+  return $html;
  }
 }
