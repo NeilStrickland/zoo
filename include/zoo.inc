@@ -2,9 +2,7 @@
 
 //ini_set('display_errors','On');
 
-$frog_dir = $_SERVER['DOCUMENT_ROOT'] . '/include/frog';
-require_once($frog_dir . '/frog.inc');
-
+require_once('frog/frog.inc');
 require_once('zoo_class.inc');
 
 $zoo = new zoo_class();
@@ -36,13 +34,15 @@ $zoo->register('species','species');
 $zoo->register('image');
 $zoo->register('quiz_group');
 $zoo->register('quiz_group_membership');
+$zoo->register('taxon','taxa');
 
 $zoo->load_table('data_source');
 $zoo->load_data_sources();
 
+require_once('html.inc');
 require_once('navigator.inc');
 
-$zoo->html = new frog_html($zoo);
+$zoo->html = new zoo_html($zoo);
 $zoo->nav  = new zoo_navigator($zoo);
            
 ?>
