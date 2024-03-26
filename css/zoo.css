@@ -9,6 +9,27 @@ body {
  -ms-text-size-adjust: none;
 }
 
+div.topmenu {
+ position : absolute;
+ left : 5px;
+ top : 5px;
+ height : 30px;
+ width : 100%;
+}
+
+div.topmenu button {
+ margin : 3px;
+ padding : 5px;
+ background : #B0E0B0;
+ border : 1px solid #70A070;
+ border-radius : 3px;
+}
+
+div.topmenu button:hover {
+ cursor: pointer;
+ background : #C0F0C0;
+}
+
 h1,h2,h3,h4,h5,h6 {
  margin-bottom: 2px;
  margin-top: 10px; 
