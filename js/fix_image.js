@@ -105,6 +105,9 @@ fixer.init = function(x,y,w,h,x0,y0,w0,h0,ww,hh,ar) {
 
  document.body.onkeydown =
   function(e) { me.keypress_handler(e); }
+
+ document.body.onwheel =
+  function(e) { me.wheel_handler(e); }
 };
 
 fixer.create_bar = function(parent) {
@@ -162,6 +165,14 @@ fixer.move_bars = function(dx,dy,mode_) {
   this.w = Math.round(this.h*this.ar);
  }
 
+ this.set_bars();
+};
+
+fixer.scale = function(step) {
+ this.x = Math.max(0, this.x-step);
+ this.y = Math.max(0, this.y-step);
+ this.w = Math.max(10, this.w+2*step);
+ this.h = Math.round(0.75*this.w);
  this.set_bars();
 };
 
@@ -320,29 +331,41 @@ fixer.keypress_handler = function(e) {
  if (e.ctrlKey) {
   if (this.is_fat) {
    switch (e.key) {
-   case "ArrowDown" : this.use_hmiddle(); break;
-   case "ArrowUp"   : this.use_houter();  break;
-   case "ArrowLeft" : this.use_left();    break;
-   case "ArrowRight": this.use_right();   break;
-   default: return; 
+    case "ArrowDown" : this.use_hmiddle(); break;
+    case "ArrowUp"   : this.use_houter();  break;
+    case "ArrowLeft" : this.use_left();    break;
+    case "ArrowRight": this.use_right();   break;
+    default: return; 
    }
   } else {
    switch (e.key) {
-   case "ArrowDown" : this.use_bottom();  break;
-   case "ArrowUp"   : this.use_top();     break;
-   case "ArrowLeft" : this.use_vmiddle(); break;
-   case "ArrowRight": this.use_vouter();  break;
-   default: return; 
+    case "ArrowDown" : this.use_bottom();  break;
+    case "ArrowUp"   : this.use_top();     break;
+    case "ArrowLeft" : this.use_vmiddle(); break;
+    case "ArrowRight": this.use_vouter();  break;
+    default: return; 
    }
   }
  } else {
   switch (e.key) {
-  case "ArrowDown":  this.move_bars(0, step,'move'); break;
-  case "ArrowUp":    this.move_bars(0,-step,'move'); break;
-  case "ArrowLeft":  this.move_bars(-step,0,'move'); break;
-  case "ArrowRight": this.move_bars( step,0,'move'); break;
-  default: return;
+   case "ArrowDown":  this.move_bars(0, step,'move'); break;
+   case "ArrowUp":    this.move_bars(0,-step,'move'); break;
+   case "ArrowLeft":  this.move_bars(-step,0,'move'); break;
+   case "ArrowRight": this.move_bars( step,0,'move'); break;
+   case "+"         : this.scale(step);    break;
+   case "-"         : this.scale(-step);   break;
+   default: return;
   }
+ }
+};
+
+fixer.wheel_handler = function(e) {
+ var step = 1;
+ if (e.shiftKey) { step = 10; }
+ if (e.deltaY < 0) {
+  this.scale(step);
+ } else {
+  this.scale(-step);
  }
 };
 

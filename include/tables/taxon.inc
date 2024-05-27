@@ -7,7 +7,7 @@ $zoo->add_table(
  array(		
   'id' => array('type' => 'integer','notnull' => 'true'),
   'parent_id' => array('type' => 'integer', 'link' => 'taxon'),
-  'rank' => array('type' => 'text'),
+  'trank' => array('type' => 'text'),
   'name' => array('type' => 'text')
  ),
  array(
@@ -18,7 +18,7 @@ $zoo->add_table(
 SELECT
  x.id,
  x.parent_id,
- x.rank,
+ x.trank,
  x.name,
  y.name AS parent_name,
  z.name AS grandparent_name
@@ -26,15 +26,15 @@ FROM tbl_taxa x
  LEFT JOIN tbl_taxa y ON x.parent_id=y.id
   LEFT JOIN tbl_taxa z ON y.parent_id=z.id
 WHERE %s
- ORDER BY x.rank,x.name,x.id
+ ORDER BY x.trank,x.name,x.id
 SQL
 );
 
 class taxon extends frog_object {
- public $id,$parent_id,$rank,$name,$parent_name,$grandparent_name,
+ public $id,$parent_id,$trank,$name,$parent_name,$grandparent_name,
   $parent, $grandparent, $children, $species;
  
- static $ranks = ['kingdom','phylum','class','order','family','genus'];
+ static $tranks = ['kingdom','phylum','class','order','family','genus'];
 
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -43,13 +43,13 @@ class taxon extends frog_object {
  }
 
  function rank_number() {
-  return array_search($this->rank,taxon::$ranks);
+  return array_search($this->trank,taxon::$tranks);
  }
 
  function parent_rank() {
   $r = $this->rank_number();
   if ($r > 0) {
-   return taxon::$ranks[$r-1];
+   return taxon::$tranks[$r-1];
   }
   return null;
  }
@@ -57,7 +57,7 @@ class taxon extends frog_object {
  function load_species() {
   global $zoo;
 
-  $q = "x.{$this->rank}='{$this->name}'";
+  $q = "x.{$this->trank}='{$this->name}'";
   $this->species = $zoo->load_where('species',$q);
   return $this->species;
  }
@@ -112,7 +112,7 @@ class taxon extends frog_object {
   $ks = array_keys($x->votes);
   if (count($ks) == 1) {
    $x->parent_name = trim($ks[0]);
-   $pp = $zoo->load_where('taxon',"x.rank='$p' AND x.name='{$x->parent_name}'");
+   $pp = $zoo->load_where('taxon',"x.trank='$p' AND x.name='{$x->parent_name}'");
    if (count($pp) == 1) {
     $x->parent = $pp[0];
     $x->parent_id = $pp[0]->id;
@@ -131,12 +131,12 @@ class taxon extends frog_object {
 
  function chain() {
   $x = new stdClass();
-  foreach (taxon::$ranks as $r) {
+  foreach (taxon::$tranks as $r) {
    $x->$r = '';
   }
   $t = $this;
   while ($t) {
-   $r = $t->rank;
+   $r = $t->trank;
    $x->$r = $t->name;
    $t = $t->get_parent();
   }
@@ -144,7 +144,7 @@ class taxon extends frog_object {
  }
 
  static function compare_chains($a,$b) {
-  foreach (taxon::$ranks as $r) {
+  foreach (taxon::$tranks as $r) {
    if ($a->$r != $b->$r) {
     return $a->$r <=> $b->$r;
    }

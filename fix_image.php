@@ -30,11 +30,42 @@ function get_params() {
  
  $params->id = (int) get_optional_parameter('id',0);
 
+ $w = <<<SQL
+x.width IS NULL OR x.height IS NULL OR
+x.width = 0 OR x.height = 0 OR
+x.width < $r_min * x.height OR x.width > $r_max * x.height
+   
+SQL;
+  
+ $params->bad_images =
+ $zoo->load_where_ordered('images',$w,'id');
+ 
+ $ni = 0;
+ $pi = 0;
+ $id = $params->id;
+
+ foreach($params->bad_images as $x) {
+  if ($x->id < $id && (($pi == 0) || ($x->id > $pi))) {
+   $pi = $x->id;
+  }
+
+  if ($x->id > $id && (($ni == 0) || ($x->id < $ni))) {
+   $ni = $x->id;
+  }
+ }
+
+ $params->next_image = $ni;
+ $params->previous_image = $pi;
+
  if ($params->id) {
   $params->image = $zoo->load('image',$params->id);
   if (! $params->image) {
    error_page('Image does not exist');
    exit;
+  }
+  $params->image_name = $params->image->binomial;
+  if ($params->image->common_name) {
+   $params->image_name .= ' (' . $params->image->common_name . ')';
   }
   
   $params->image_url  = $params->image->url();
@@ -49,20 +80,7 @@ function get_params() {
   
   $params->image->set_size(1);
   $params->image->load_object();
-
-  $params->next_image = null;
-  $params->previous_image = null;
-  $params->bad_images = array();
  } else {
-  $w = <<<SQL
-x.width IS NULL OR x.height IS NULL OR
-x.width = 0 OR x.height = 0 OR
-x.width < $r_min * x.height OR x.width > $r_max * x.height
-  
-SQL;
- 
-  $params->bad_images =
-   $zoo->load_where_ordered('images',$w,'id');
 
   if (! $params->bad_images) {
    no_bad_images_page($params);
@@ -85,22 +103,6 @@ SQL;
   $params->image_url  = $params->image->url();
   $params->image_file = $params->image->full_file_name();
 
-  $ni = 0;
-  $pi = 0;
-  $id = $params->id;
- 
-  foreach($params->bad_images as $x) {
-   if ($x->id < $id && (($pi == 0) || ($x->id > $pi))) {
-    $pi = $x->id;
-   }
-
-   if ($x->id > $id && (($ni == 0) || ($x->id < $ni))) {
-    $ni = $x->id;
-   }
-  }
-
-  $params->next_image = $ni;
-  $params->previous_image = $pi;
 
  }
  
@@ -179,7 +181,7 @@ function choose_fix($params) {
 </head>
 <body onload="fixer.init($x,$y,$w,$h,$x0,$y0,$w0,$h0,$ww,$hh,$ar)">
 <div id="main_div">
-<h1>Editing image ($n left)</h1>
+<h1>Editing image: {$params->image_name} ($n left)</h1>
 <br/>
 <table class="edged">
  <tr>
@@ -365,7 +367,7 @@ function init() {
 </head>
 <body onload="init()">
 <div id="main_div">
-<h1>Edited image</h1>
+<h1>Edited image: {$params->image_name}</h1>
 <br/>
 <table>
  <tr>
@@ -402,6 +404,12 @@ HTML;
 HTML;
 }
 
+//////////////////////////////////////////////////////////////////////
 
+function no_bad_images_page($params) {
+ echo <<<HTML
+No bad images
+HTML;
+}
 
 ?>

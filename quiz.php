@@ -1,7 +1,7 @@
 <?php
 
 require_once('include/zoo.inc');
-require_once('../include/Mobile_Detect.inc');
+require_once('Mobile_Detect.inc');
 
 $quiz_group_id =
  (int) get_optional_parameter('id',0);
@@ -46,6 +46,7 @@ function do_command(c,id) {
 JS;
  
  $zoo->nav->header('All quizzes',array('inline_script' => $script));
+ echo $zoo->nav->top_menu();
 
  echo <<<HTML
 <body>
@@ -427,7 +428,7 @@ function remove_membership(id) {
 function find_images(i,g,s) {
  window.open('find_images.php?id=' + i,'Find images');
  var u = 'https://www.google.com/search?hl=en&q=' + 
-         g + '+' + s + '&btnG=Search+Images&gbv=2&tbm=isch';
+         g + '+' + s + '&btnG=Search+Images&gbv=2&tbm=isch&tbs=isz:l';
  window.open(u,'Google images');
 }
 

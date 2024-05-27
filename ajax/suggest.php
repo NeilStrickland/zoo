@@ -1,6 +1,6 @@
 <?php
 
-require_once('../include/frog/suggester.inc');
+require_once('frog/suggester.inc');
 require_once('../include/zoo.inc');
 require_once('../include/suggester.inc');
 

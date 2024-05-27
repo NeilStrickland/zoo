@@ -54,7 +54,7 @@ class taxon_suggester extends frog_suggester {
   $this->type = 'taxon';
   $this->table_name = 'tbl_taxa x';
   $this->descriptor_query = <<<SQL
-SELECT CONCAT(x.name, ' (',x.rank,')') 
+SELECT CONCAT(x.name, ' (',x.trank,')') 
 FROM tbl_taxa x WHERE x.id = %s LIMIT 0,1
 SQL
 ; }
@@ -65,10 +65,10 @@ SQL
   $q = <<<SQL
 SELECT
  x.id AS k,
- CONCAT(x.name, ' (',x.rank,')') AS v
+ CONCAT(x.name, ' (',x.trank,')') AS v
 FROM {$this->table_name}
 WHERE x.name LIKE '%$s%'
-ORDER BY x.rank,x.name
+ORDER BY x.trank,x.name
 LIMIT 0,$n
 
 SQL;

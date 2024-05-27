@@ -1,6 +1,6 @@
 <?php
 
-//ini_set('display_errors','On');
+ini_set('display_errors','On');
 
 require_once('frog/frog.inc');
 require_once('zoo_class.inc');

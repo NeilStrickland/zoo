@@ -13,8 +13,10 @@ $zoo->add_table(
  array(
   'data_source_name' => array('type' => 'text'),
   'data_source_code' => array('type' => 'text'),
+  'data_source_species_page_format' => array('type' => 'text'),
   'species_genus' => array('type' => 'text'),
-  'species_species' => array('type' => 'text')
+  'species_species' => array('type' => 'text'),
+  'species_common_name' => array('type' => 'text')
  ),
  <<<SQL
 SELECT
@@ -22,9 +24,11 @@ SELECT
  x.species_id,
  t.genus AS species_genus, 
  t.species AS species_species, 
+ t.common_name AS species_common_name,
  x.data_source_id,
  s.name AS data_source_name,
  s.code AS data_source_code,
+ s.species_page_format AS data_source_species_page_format,
  x.external_id
 FROM tbl_data_records x
  LEFT JOIN tbl_species t ON x.species_id = t.id
@@ -36,8 +40,9 @@ SQL
 );
 
 class data_record extends frog_object {
- public $id,$species_id,$species_genus,$species_species,
-  $data_source_id,$data_source_name,$data_source_code,$external_id;
+ public $id,$species_id,$species_genus,$species_species,$species_common_name,
+  $data_source_id,$data_source_name,$data_source_code,$data_source_species_page_format,
+  $external_id;
 
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -54,6 +59,7 @@ class data_record extends frog_object {
    $x->species_id = $this->species_id;
    $x->species_genus = $this->species_genus;
    $x->species_species = $this->species_species;
+   $x->species_common_name = $this->species_common_name;
    $x->data_source_id = $this->data_source_id;
    $x->data_source_name = $this->data_source_name;
    $x->data_source_code = $this->data_source_code;
@@ -73,7 +79,8 @@ class data_record extends frog_object {
   $vals['s'] = strtolower($vals['S']);
   $vals['i'] = $r->external_id;
 
-  foreach($this->species_page_formats as $f) {
+  $formats = explode('|',$this->data_source_species_page_format);
+  foreach($formats as $f) {
    $ok = true;
    $u = $f;
    foreach($vals as $k => $v) {

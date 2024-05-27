@@ -31,9 +31,13 @@ class quiz_group extends frog_object {
  function load_members() {
   global $zoo;
   
-  $this->members =
-   $zoo->load_where('quiz_group_memberships',
-		    "x.quiz_group_id={$this->id}");
+  if ($this->id) {
+   $this->members =
+    $zoo->load_where('quiz_group_memberships',
+		     "x.quiz_group_id={$this->id}");
+  } else {
+   $this->members = [];
+  }
 
   $this->members_by_id =
    make_index($this->members,'id');

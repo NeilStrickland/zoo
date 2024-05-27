@@ -9,6 +9,7 @@ $zoo->add_table(
   'name' => array('type' => 'text'),
   'code' => array('type' => 'text'),
   'default_key' => array('type' => 'text'),
+  'home_page' => array('type' => 'text'),
   'species_page_format' => array('type' => 'text')
  ),
  array(),
@@ -17,7 +18,9 @@ SELECT
  x.id,
  x.name,
  x.code,
- x.default_key
+ x.default_key,
+ x.home_page,
+ x.species_page_format
 FROM tbl_data_sources x
 WHERE %s
  ORDER BY x.name
@@ -25,7 +28,8 @@ SQL
 );
 
 class data_source extends frog_object {
- public $id,$name,$code,$default_key,$species_page_format,$species_page_formats;
+ public $id,$name,$code,$default_key,$species_page_format,
+  $species_page_formats,$records,$records_by_id,$records_by_external_id;
 
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -52,9 +56,9 @@ class data_source extends frog_object {
   $this->species_page_formats = explode('|',$this->species_page_format);
 
   $vals = array();
-  $vals['G'] = ucwords($r->genus);
+  $vals['G'] = ucwords($r->species_genus);
   $vals['g'] = strtolower($vals['G']);
-  $vals['S'] = ucwords($r->species);
+  $vals['S'] = ucwords($r->species_species);
   $vals['s'] = strtolower($vals['S']);
   $vals['i'] = $r->external_id;
 
@@ -84,15 +88,28 @@ class data_source extends frog_object {
   $u = $this->species_page_url($r);
   if ($u) {
    return '<a target="_blank" href="' . $u . '">' .
-    $r->genus . ' ' . $r->species . '</a>';
+    $r->species_genus . ' ' . $r->species_species . '</a>';
   } else {
-   return $r->genus . ' ' . $r->species;
+   return $r->species_genus . ' ' . $r->species_species;
   }
  }
 
  function find_external_id($G,$s) {
   // should be overridden by subclasses
   return null;
+ }
+
+ function load_records() {
+  global $zoo;
+
+  if ($this->id) {
+   $this->records = $zoo->load_where('data_records',"data_source_id={$this->id}");
+  } else {
+   $this->records = [];
+  } 
+  $this->records_by_id = make_index($this->records,'id');
+  $this->records_by_external_id = make_index($this->records,'external_id');
+  return $this->records;
  }
 }
 
@@ -242,4 +259,14 @@ class data_source_fb extends data_source {
  }
 }
 
+//
+
+class data_source_ab extends data_source {
+  function __construct($id = null,$with_defaults=1) {
+   parent::__construct($id,$with_defaults);
+  }
+ 
+  function find_external_id($G,$s) {}
+ }
+ 
 ?>

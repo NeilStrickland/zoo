@@ -9,6 +9,14 @@ class zoo_html extends frog_html {
   $this->icons_url = 'icons';
  }
 
+ function data_source_selector($field_name,$id='',$opts=null) {
+  global $zoo;
+
+  $sources = $zoo->load_all('data_source');
+  $oo = ['mode' => 'indirect', 'index' => 'id', 'display' => 'name', 'empty_option' => true]; 
+  return $this->selector($field_name,$sources,$id,$oo);
+ }
+
  function species_selector($field_name,$id='',$opts=null) {
   $v = '';
   if ($id) {
