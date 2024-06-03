@@ -28,7 +28,7 @@ SQL
 );
 
 class data_source extends frog_object {
- public $id,$name,$code,$default_key,$species_page_format,
+ public $id,$name,$code,$default_key,$home_page,$species_page_format,
   $species_page_formats,$records,$records_by_id,$records_by_external_id;
 
  function __construct($id = null,$with_defaults=1) {
