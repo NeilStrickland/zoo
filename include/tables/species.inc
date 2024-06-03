@@ -40,13 +40,29 @@ SQL
 
 class species extends frog_object {
  public $id,$object,$kingdom,$phylum,$class,$order,$family,$genus,$species,
-  $binomial,$common_name,$common_group,$images,
+  $binomial,$common_name,$common_group,$images,$sounds,$quiz_groups,
   $data_records,$data_records_by_source,$data_records_by_code;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
 
   parent::__construct($zoo,'species',$id,$with_defaults);
+ }
+
+ function descriptor() {
+  if ($this->genus && $this->species) {
+   $s =  $this->genus . ' ' . $this->species;
+   if ($this->common_name) {
+    $s .= ' (' . $this->common_name . ')';
+   }
+   return $s;
+  } else if ($this->common_name) {
+   return $this->common_name;
+  } else if ($this->id) {
+   return 'Species ' . $this->id;
+  } else {
+   return 'New species';
+  }
  }
 
  function info_url() {
@@ -68,6 +84,21 @@ class species extends frog_object {
   global $zoo;
 
   $this->images = $zoo->load_where('images',"species_id={$this->id}");
+  return $this->images;
+ }
+
+ function load_sounds() {
+  global $zoo;
+
+  $this->sounds = $zoo->load_where('sounds',"species_id={$this->id}");
+  return $this->sounds;
+ }
+
+ function load_quiz_groups() {
+  global $zoo;
+
+  $this->quiz_groups = $zoo->load_where('quiz_group_membership',"species_id={$this->id}");
+  return $this->quiz_groups;
  }
 
  function load_data_records() {
@@ -83,6 +114,15 @@ class species extends frog_object {
    make_index($this->data_records,'data_source_id');
   $this->data_records_by_code =
    make_index($this->data_records,'data_source_code');
+
+  return $this->data_records;
+ }
+
+ function load_associated() {
+  $this->load_images();
+  $this->load_sounds();
+  $this->load_quiz_groups();
+  $this->load_data_records();
  }
 
  function add_data_record($data_source_id,$external_id) {
@@ -152,6 +192,26 @@ class species extends frog_object {
   $y->species_binomial = $this->binomial;
   $y->species_common_name = $this->common_name;
   $y->image_id = $i->id;
+  return $y;
+ }
+
+ function add_sound($filename) {
+  global $zoo;
+  
+  $i = $zoo->new_object('sound');
+  $i->species_id = $this->id;
+  $i->save();
+  $ext = strtolower(pathinfo($filename,PATHINFO_EXTENSION));
+  $i->file_name = 'sound_' . $i->id . '.' . $ext;
+  $i->save();
+  rename($filename,$zoo->sound_dir . '/' . $i->file_name);
+  $y = new stdClass();
+  $y->original_location = $filename;
+  $y->species_id = $this->id;
+  $y->species_binomial = $this->binomial;
+  $y->species_common_name = $this->common_name;
+  $y->image_id = $i->id;
+  $y->file_name = $i->file_name;
   return $y;
  }
 
