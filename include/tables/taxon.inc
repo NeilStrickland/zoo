@@ -32,7 +32,8 @@ SQL
 
 class taxon extends frog_object {
  public $id,$parent_id,$trank,$name,$parent_name,$grandparent_name,
-  $parent, $grandparent, $children, $species;
+  $parent, $grandparent, $children, $species, 
+  $is_new, $new_parent_id;
  
  static $tranks = ['kingdom','phylum','class','order','family','genus'];
 
@@ -42,12 +43,12 @@ class taxon extends frog_object {
   parent::__construct($zoo,'taxon',$id,$with_defaults);
  }
 
- function rank_number() {
+ function trank_number() {
   return array_search($this->trank,taxon::$tranks);
  }
 
- function parent_rank() {
-  $r = $this->rank_number();
+ function parent_trank() {
+  $r = $this->trank_number();
   if ($r > 0) {
    return taxon::$tranks[$r-1];
   }
@@ -83,7 +84,7 @@ class taxon extends frog_object {
  function find_parent() {
   global $zoo;
 
-  $r = $this->rank_number();
+  $r = $this->trank_number();
   $x = new stdClass();
   $x->parent_name = null;
   $x->parent_id = null;
@@ -95,7 +96,7 @@ class taxon extends frog_object {
    $x->error = 'No rank';
    return $x;
   }
-  $p = $this->parent_rank();
+  $p = $this->parent_trank();
   $species = $this->load_species();
   if (! $species) {
    $x->error = 'No species';
