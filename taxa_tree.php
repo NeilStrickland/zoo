@@ -8,7 +8,7 @@ $ret = $zoo->tabulate_taxa();
 $tree = $zoo->taxa_tree();
 
 $u = new stdClass();
-foreach(taxon::$ranks as $r) {
+foreach(taxon::$tranks as $r) {
  $u->$r = '';
 }
 
@@ -24,7 +24,7 @@ echo $H->edged_table_start();
 
 foreach($tree as $x) {
  $s = '';
- foreach(taxon::$ranks as $r) {
+ foreach(taxon::$tranks as $r) {
   $s0 = ($x->$r == $u->$r) ? '' : $x->$r;
   $s .= $H->td($s0);
  }
