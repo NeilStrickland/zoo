@@ -84,7 +84,7 @@ class image extends frog_object {
 
  function geometry_string() {
   return
-   sprintf("%d x %d [%1.2f]",$this->width,$this->height,$this->aspect_ratio());
+   sprintf("%dx%d [%1.2f]",$this->width,$this->height,$this->aspect_ratio());
  }
  
  function set_size($save = false) {
