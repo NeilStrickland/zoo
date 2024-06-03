@@ -54,6 +54,7 @@ class quiz_group extends frog_object {
   foreach ($this->members as $m) {
    $ids[] = $m->species_id;
    $m->images = array();
+   $m->sounds = array();
   }
 
   $ids = implode(',',$ids);
@@ -61,6 +62,10 @@ class quiz_group extends frog_object {
    $images = $zoo->load_where('images',"species_id IN ($ids)");
    foreach($images as $i) {
     $this->members_by_species_id[$i->species_id]->images[] = $i;
+   }
+   $sounds = $zoo->load_where('sounds',"species_id IN ($ids)");
+   foreach($sounds as $s) {
+    $this->members_by_species_id[$s->species_id]->sounds[] = $s;
    }
   }
 
