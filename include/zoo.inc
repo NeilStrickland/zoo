@@ -27,11 +27,14 @@ $db_pass = null;
 $zoo->image_dir           = $zoo->data_dir . "/images";
 $zoo->original_images_dir = $zoo->data_dir . '/original_images';
 $zoo->temp_images_dir     = $zoo->data_dir . '/temp_images';
+$zoo->sound_dir           = $zoo->data_dir . "/sounds";
+$zoo->temp_sounds_dir     = $zoo->data_dir . '/temp_sounds';
 
 $zoo->register('data_source');
 $zoo->register('data_record');
 $zoo->register('species','species');
 $zoo->register('image');
+$zoo->register('sound');
 $zoo->register('quiz_group');
 $zoo->register('quiz_group_membership');
 $zoo->register('taxon','taxa');
