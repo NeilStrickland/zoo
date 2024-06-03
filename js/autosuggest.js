@@ -558,16 +558,31 @@ autosuggest.set_value = function(i) {
 autosuggest.known_types = {
     'species' : 1,
     'taxon' : 1,
+    'kingdom' : 1,
+    'phylum' : 1,
+    'class' : 1,
+    'order' : 1,
+    'family' : 1
 };
 
 autosuggest.default_size = {
     'species' : 65,
-    'taxon' : 65
+    'taxon' : 65,
+    'kingdom' : 30,
+    'phylum' : 30,
+    'class' : 30,
+    'order' : 30,
+    'family' : 30
 };
 
 autosuggest.extra_params = {
     'species' : [],
-    'taxon' : []
+    'taxon' : [],
+    'kingdom' : [],
+    'phylum' : [],
+    'class' : [],
+    'order' : [],
+    'family' : []
 };
 
 autosuggest.setup_all = function() {
@@ -591,6 +606,10 @@ autosuggest.setup_all = function() {
      for (p of this.extra_params[s]) {
       v = ip.getAttribute(p);
       if (v) {
+       if (v.endsWith('_VALUE')) {
+        k = v.slice(0,-6);
+        v = document.getElementById(k).value;
+       }
        url = url + '&' + p + '=' + v;
       }
      }
