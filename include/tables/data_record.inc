@@ -63,6 +63,7 @@ class data_record extends frog_object {
    $x->data_source_id = $this->data_source_id;
    $x->data_source_name = $this->data_source_name;
    $x->data_source_code = $this->data_source_code;
+   $x->data_source_species_page_format = $this->data_source_species_page_format;
    $x->external_id = $this->external_id;
    
    return $x; 
@@ -71,15 +72,15 @@ class data_record extends frog_object {
   }
  }
  
- function species_page_url($r) {
+ function species_page_url() {
   $vals = array();
-  $vals['G'] = ucwords($r->genus);
+  $vals['G'] = ucwords($this->species_genus);
   $vals['g'] = strtolower($vals['G']);
-  $vals['S'] = ucwords($r->species);
+  $vals['S'] = ucwords($this->species_species);
   $vals['s'] = strtolower($vals['S']);
-  $vals['i'] = $r->external_id;
+  $vals['i'] = $this->external_id;
 
-  $formats = explode('|',$this->data_source_species_page_format);
+  $formats = explode('|',$this->data_source_species_page_format ?? '');
   foreach($formats as $f) {
    $ok = true;
    $u = $f;
@@ -106,13 +107,26 @@ class data_record extends frog_object {
   return null;
  }
  
- function linked_binomial($r) {
-  $u = $this->species_page_url($r);
+ function linked_binomial() {
+  $b = $this->species_genus . ' ' . $this->species_species;
+  $u = $this->species_page_url($this);
   if ($u) {
-   return '<a target="_blank" href="' . $u . '">' .
-    $r->genus . ' ' . $r->species . '</a>';
+   return '<a target="_blank" href="' . $u . '">' . $b . '</a>';
   } else {
-   return $r->genus . ' ' . $r->species;
+   return $b;
+  }
+ }
+
+ function linked_external_id() {
+  $i = $this->external_id;
+  if (! $i) {
+   $i = $this->species_genus . ' ' . $this->species_species;
+  }
+  $u = $this->species_page_url();
+  if ($u) {
+   return '<a target="_blank" href="' . $u . '">' . $i . '</a>';
+  } else {
+   return $i;
   }
  }
 }
