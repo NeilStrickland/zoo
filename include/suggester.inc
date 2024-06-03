@@ -76,3 +76,66 @@ SQL;
   $n -= $this->add_suggestions($q);
  }
 }
+
+class ranked_taxon_suggester extends frog_suggester {
+ var $trank;
+
+ function __construct($trank) {
+  global $zoo;
+  $this->frog = $zoo;
+  $this->type = 'taxon';
+  $this->trank = $trank;  
+  $this->table_name = 'tbl_taxa x';
+  $this->descriptor_query = <<<SQL
+SELECT x.name 
+FROM tbl_taxa x WHERE x.id = %s AND x.trank='{$trank}' LIMIT 0,1
+SQL
+; }
+ 
+ function get_suggestions() {
+  $s = $this->search_term;
+  $n = 10;
+  $q = <<<SQL
+SELECT
+ x.name AS k,
+ x.name AS v
+FROM {$this->table_name}
+WHERE x.name LIKE '%$s%' AND x.trank='{$this->trank}'
+ORDER BY x.name
+LIMIT 0,$n
+
+SQL;
+
+  $n -= $this->add_suggestions($q);
+ }
+}
+
+class kingdom_suggester extends ranked_taxon_suggester {
+ function __construct() {
+  parent::__construct('kingdom');
+ }
+}
+
+class phylum_suggester extends ranked_taxon_suggester {
+ function __construct() {
+  parent::__construct('phylum');
+ }
+}
+
+class class_suggester extends ranked_taxon_suggester {
+ function __construct() {
+  parent::__construct('class');
+ }
+}
+
+class order_suggester extends ranked_taxon_suggester {
+ function __construct() {
+  parent::__construct('order');
+ }
+}
+
+class family_suggester extends ranked_taxon_suggester {
+ function __construct() {
+  parent::__construct('family');
+ }
+}
