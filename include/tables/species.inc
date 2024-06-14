@@ -41,7 +41,7 @@ SQL
 class species extends frog_object {
  public $id,$object,$kingdom,$phylum,$class,$order,$family,$genus,$species,
   $binomial,$common_name,$common_group,$images,$sounds,$quiz_groups,
-  $data_records,$data_records_by_source,$data_records_by_code;
+  $data_records,$data_records_by_source,$data_records_by_code,$species_id;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
