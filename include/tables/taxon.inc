@@ -144,6 +144,10 @@ class taxon extends frog_object {
   return $x;
  }
 
+ function wiki_url() {
+  return 'https://en.wikipedia.org/wiki/' .  $this->name;
+ }
+
  static function compare_chains($a,$b) {
   foreach (taxon::$tranks as $r) {
    if ($a->$r != $b->$r) {
