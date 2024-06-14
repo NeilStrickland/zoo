@@ -3,31 +3,110 @@
 require_once('include/zoo.inc');
 require_once('Mobile_Detect.inc');
 
-$quiz_group_id =
- (int) get_optional_parameter('id',0);
+$params = get_params();
 
-$command = get_restricted_parameter('command',
- array('choose','view','view_missing','tree','try','offline'),
- 'try');
-
-$g = null;
-
-if ($quiz_group_id) {
- $g = $zoo->load('quiz_group',$quiz_group_id);
+if ($params->command == 'try') {  
+ try_quiz($params,0);
+} else if ($params->command == 'offline') {  
+ try_quiz($params,1);
+} else if ($params->command == 'view') {
+ view_quiz($params);
+} else if ($params->command == 'tree') {
+ tree_view_quiz($params);
+} else if ($params->command == 'csv') {
+  show_csv($params);
+} else {
+ choose_quiz($params);
 }
 
-if (! $g) { $command = 'choose'; }
+//////////////////////////////////////////////////////////////////////
 
-if ($command == 'try') {  
- try_quiz($g,0);
-} else if ($command == 'offline') {  
- try_quiz($g,1);
-} else if ($command == 'view' || $command == 'view_missing') {
- view_quiz($g,$command);
-} else if ($command == 'tree') {
- tree_view_quiz($g);
-} else {
- choose_quiz();
+function get_params() {
+ global $zoo;
+
+ $zoo->attach_images(1);
+ $zoo->attach_sounds(1);
+
+ $params = new stdClass();
+ $params->id = (int) get_optional_parameter('id',0);
+ $params->command = get_restricted_parameter('command',['choose','view','tree','csv','try','offline'],'try');
+ $params->quiz_group = null;
+ $params->taxa = null;
+ $params->mode = null;
+ if ($params->id) {
+  $params->quiz_group = $zoo->load('quiz_group',$params->id);
+  if ($params->quiz_group) {
+   $params->mode = 'group';
+  }
+ } else {
+  $taxa = [];
+  for ($i = 0; $i < 10; $i++) {
+   $tid = (int) get_optional_parameter('tid' . $i,0);
+   if (! $tid) { continue; }
+   $taxon = $zoo->load('taxon',$tid);
+   if ($taxon) { $taxa[] = $taxon; }
+  }
+  if ($taxa) {
+   $params->taxa = $taxa;
+   $params->mode = 'taxa';
+  }
+ }
+ if (! $params->mode) {
+  $params->command = 'choose';
+ }
+
+ if ($params->command == 'view') {
+  $params->view_type = get_restricted_parameter('view_type',['all','bad_images','bad_sounds'],'all');
+  if ($params->view_type == 'bad_images') {
+   $params->show_images = 1;
+   $params->show_sounds = 0;
+  } else if ($params->view_type == 'bad_sounds') {
+   $params->show_images = 0;
+   $params->show_sounds = 1;
+  } else {
+   $params->show_images = (int) get_optional_parameter('show_images',1);
+   $params->show_sounds = (int) get_optional_parameter('show_sounds',1);
+  } 
+ }
+
+ return $params;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+function load_species($params) {
+ global $zoo;
+
+ $species = array();
+ if ($params->mode == 'group') {
+  $group = $params->quiz_group;
+  $params->title = $group->name;
+  $species = $group->load_members();
+ } else if ($params->mode == 'taxa') {
+  $species = [];
+  $i = 0;
+  $title = '';
+  foreach($params->taxa as $taxon) {
+   $ss = $taxon->load_species();
+   foreach($ss as $s) {
+    $s->species_id = $s->id;
+    $s->load_sounds();
+    $s->load_images();
+    $species[$s->id] = $s;
+   }
+   if ($i == 0) {
+    $title = $taxon->name;
+   } else if ($i < 3) {
+    $title .= ', ' . $taxon->name;
+   } else if ($i == 3) {
+    $title .= '...';
+   }
+  }
+  $params->title = $title;
+ }
+
+ $params->all_species = $species;
+ return $species;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -35,25 +114,47 @@ if ($command == 'try') {
 function choose_quiz() {
  global $zoo;
 
- $quizzes = $zoo->load_all('quiz_groups');
-
  $script = <<<JS
 
 function do_command(c,id) {
  window.open('quiz.php?id=' + id + '&command=' + c);
 }
 
+function view_quiz(id, type) {
+ window.open('quiz.php?id=' + id + '&command=view&view_type=' + type);
+}
+
 JS;
- 
- $zoo->nav->header('All quizzes',array('inline_script' => $script));
- echo $zoo->nav->top_menu();
+
+ $H = $zoo->html;
+ $N = $zoo->nav;
+
+ $N->header('All quizzes',['inline_script' => $script, 'widgets' => ['autosuggest','tabber']]);
+ echo $N->top_menu();
 
  echo <<<HTML
-<body>
  <h1>All quizzes</h1>
  <br/>
 HTML
 ;
+
+ echo $H->tabber_start('choose_quiz_tabber');
+ choose_quiz_tab();
+ choose_taxa_tab();
+ echo $H->tabber_end();
+ 
+ $N->footer();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+function choose_quiz_tab() {
+ global $zoo;
+
+ $quizzes = $zoo->load_all('quiz_groups');
+
+ $H = $zoo->html;
+ echo $H->tab_start('Quizzes');
 
  $detect = new Mobile_Detect;
 
@@ -70,10 +171,9 @@ HTML
    <td colspan="4">{$q->name}</td>
   </tr>
   <tr>
-   <td width="25%" class="command" onclick="do_command('try',{$q->id})">Try</td>
-   <td width="25%" class="command" onclick="do_command('offline',{$q->id})">Offline</td>
-   <td width="25%" class="command" onclick="do_command('view',{$q->id})">View</td>
-   <td width="25%" class="command" onclick="do_command('view_missing',{$q->id})">Add images</td>
+   <td width="33%" class="command" onclick="do_command('try',{$q->id})">Try</td>
+   <td width="33%" class="command" onclick="do_command('offline',{$q->id})">Offline</td>
+   <td width="33%" class="command" onclick="do_command('view',{$q->id})">View</td>
   </tr>
 
 HTML
@@ -97,8 +197,9 @@ HTML
    <td width="300">{$q->name}</td>
    <td class="command" onclick="do_command('try',{$q->id})">Try</td>
    <td class="command" onclick="do_command('offline',{$q->id})">Offline</td>
-   <td class="command" onclick="do_command('view',{$q->id})">View</td>
-   <td class="command" onclick="do_command('view_missing',{$q->id})">Add images</td>
+   <td class="command" onclick="view_quiz({$q->id},'all')">View</td>
+   <td class="command" onclick="view_quiz({$q->id},'bad_images')">Add images</td>
+   <td class="command" onclick="view_quiz({$q->id},'bad_sounds')">Add sounds</td>
   </tr>
 
 HTML
@@ -111,13 +212,33 @@ HTML
 HTML
   ;
  }
- 
+
+ echo $H->tab_end();
+}
+
+function choose_taxa_tab() {
+ global $zoo;
+
+ $H = $zoo->html;
+ echo $H->tab_start('Taxa');
+
  echo <<<HTML
-</body>
+<form name="taxa_form" action="quiz.php" method="POST" target="_blank">
+<input type="hidden" name="command" value="try"/>
 
 HTML;
 
- $zoo->nav->footer();
+ for ($i = 0; $i < 10; $i++) {
+  echo $H->taxon_selector('tid' . $i) . '<br/>';
+ }
+
+ echo <<<HTML
+
+<button class="command" type="button" onclick="document.taxa_form.submit()">Try</button>
+</form>
+HTML;
+
+ echo $H->tab_end();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -125,24 +246,29 @@ HTML;
 function wrap_style($css) {
  return <<<HTML
 <style type="text/css">
-$css
+{$css}
 </style>
 
 HTML;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 function wrap_script($js) {
  return <<<HTML
 <script type="text/javascript">
-$js
+{$js}
 </script>
 HTML;
 }
 
-function try_quiz($group,$offline = false) {
+//////////////////////////////////////////////////////////////////////
+
+function try_quiz($params,$offline = false) {
  global $zoo;
 
- $all_species = $group->load_members();
+ $group = $params->quiz_group;
+ $all_species = load_species($params);
 
  $detect = new Mobile_Detect;
 
@@ -195,7 +321,7 @@ HTML;
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{$group->name}</title>
+<title>{$params->title}</title>
 {$tabber_css}
 {$zoo_css}
 {$quiz_css}
@@ -276,7 +402,7 @@ HTML;
 {$quiz_js}
 </head>
 <body onload="quiz.init();tabberAutomaticOnLoad();">
-<h1>{$group->name}</h1>
+<h1>{$params->title}</h1>
 <div id="tabber_div" class="tabber">
  <div id="questions_div" class="tabbertab">
   <h2 id="questions_h2">Questions</h2>
@@ -349,13 +475,12 @@ HTML;
 
 //////////////////////////////////////////////////////////////////////
 
-function view_quiz($group,$command) {
+function view_quiz($params) {
  global $zoo;
 
+ $group = $params->quiz_group;
 
- if ($command == 'view_missing') {
-  $zoo->attach_images(1);
-
+ if ($params->view_type == 'bad_images') {
   $all_species = $group->load_members();
 
   $n0 = count($all_species);
@@ -387,13 +512,32 @@ This quiz has $n0 species.  Of these, $n1 have no images (or have images that ne
 HTML;
   
   $all_species = $ss;
+ } else if ($params->view_type == 'bad_sounds') {
+  $all_species = $group->load_members();
+
+  $n0 = count($all_species);
+  
+  $ss = array();
+  foreach($all_species as $s) {
+   if (! $s->sounds) {
+    $ss[] = $s;
+   }
+  }
+
+  $n1 = count($ss);
+  $n2 = $n0 - $n1;
+
+  $count_msg = <<<HTML
+<br/>
+This quiz has $n0 species.  Of these, $n1 have no sounds.  
+<br/>
+
+HTML;
+  
+  $all_species = $ss;
  } else {
 
   $count_msg = '';
-  
-  if ($command == 'view') {
-   $zoo->attach_images(1);
-  }
   $all_species = $group->load_members();
  }
  
@@ -404,35 +548,7 @@ HTML;
 <script type="text/javascript" src="js/tabber.js"></script>
 <link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
 <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
-<script type="text/javascript">
- 
-function remove_membership(id) {
- var tr = document.getElementById('quiz_group_membership_tr_' + id);
- var x = frog.create_xhr();
- var u = 'ajax/delete_quiz_group_membership.php?id=' + id;
- try {
-  x.open('GET',u,false);
- } catch(e) {
-  alert('XHR could not connect');
- }
-
- try {
-  x.send(null);
- } catch(e) {
-  alert('XHR send failed');
- }
-
- tr.style.display = 'none';
-}
-
-function find_images(i,g,s) {
- window.open('find_images.php?id=' + i,'Find images');
- var u = 'https://www.google.com/search?hl=en&q=' + 
-         g + '+' + s + '&btnG=Search+Images&gbv=2&tbm=isch&tbs=isz:l';
- window.open(u,'Google images');
-}
-
-</script>
+<script type="text/javascript" src="js/view_quiz.js"></script>
 </head>
 <body>
 <h1>{$group->name}</h1>
@@ -446,12 +562,20 @@ HTML;
 
  foreach($all_species as $s) {
   $ii = '';
-  foreach($s->images as $i) {
-   $u = $i->url();
-   $v = 'fix_image.php?id=' . $i->id;
-   $ii .= <<<HTML
-<img width="180" src="$u" onclick="window.open('$v')"/>
-HTML;
+  if ($params->show_images) {
+   foreach($s->images as $i) {
+    $u = $i->url();
+    $v = 'fix_image.php?id=' . $i->id;
+    $ii .= <<<HTML
+ <img width="180" src="$u" onclick="window.open('$v')"/>
+ HTML;
+   }
+  }
+  if ($params->show_sounds && $s->sounds) {
+   if ($ii) { $ii .= '<br/>'; }
+   foreach($s->sounds as $x) {
+    $ii .= $x->audio();
+   }
   }
   echo <<<HTML
    <tr id="quiz_group_membership_tr_{$s->id}">
@@ -460,6 +584,7 @@ HTML;
      {$s->linked_binomial()}<br/>
      {$s->species_id}/{$s->id}<br/>
      <a href="javascript:find_images({$s->species_id},'{$s->genus}','{$s->species}')">Find images</a><br/>
+     <a href="javascript:find_sounds({$s->species_id},'{$s->genus}','{$s->species}')">Find sounds</a><br/>
      <a href="javascript:remove_membership({$s->id})">Remove</a>
     </td>
     <td>
@@ -484,9 +609,10 @@ HTML;
 
 //////////////////////////////////////////////////////////////////////
 
-function tree_view_quiz($group) {
+function tree_view_quiz($params) {
  global $zoo;
 
+ $group = $params->quiz_group;
  $all_species = $group->load_members();
 
  echo <<<HTML
@@ -552,6 +678,25 @@ HTML;
 
 HTML;
 
+}
+
+//////////////////////////////////////////////////////////////////////
+
+function show_csv($params) {
+ global $zoo; 
+
+ $group = $params->quiz_group;
+ $all_species = $group->load_members();
+
+ header('Content-Type: text/plain'); 
+
+ foreach($all_species as $s) {
+  echo '"' . 
+    $s->species_id . '","' . 
+    $s->genus . '","' .
+    $s->species . '","' .
+    $s->common_name . '"' . "\n";
+ }
 }
 
 
