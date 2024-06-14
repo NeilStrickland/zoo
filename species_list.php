@@ -13,15 +13,17 @@ function get_params() {
  $params = new stdClass();
 
  $params->show_all = get_optional_parameter('show_all',0) ? 1 : 0;
- $params->taxon = get_optional_parameter('taxon','');
+ $params->taxon_id = (int) get_optional_parameter('taxon_id',0);
 
- if ($params->taxon) {
-  $t = $zoo->db->escape($params->taxon);
-
-  $w = <<<SQL
-x.class='$t' OR x.order='$t' OR x.family='$t' OR x.genus='$t'
-SQL;
-  $params->species = $zoo->load_where('species',$w);
+ if ($params->taxon_id) {
+  $t = $zoo->load('taxon',$params->taxon_id);
+  $params->taxon = $t;
+  if ($t) {
+   $w = "x.{$t->trank}='{$t->name}'";
+   $params->species = $zoo->load_where('species',$w);
+  } else {
+   $params->species = [];
+  }
  } else if ($params->show_all) {
   $params->species = $zoo->load_all('species');
  } else {
@@ -38,7 +40,7 @@ function show_page($params) {
  $H = $zoo->html;
  $N = $zoo->nav;
 
- $N->header('Species',['widgets' => ['autosuggest']]);
+ $N->header('Species',['widgets' => ['autosuggest'],'scripts' => ['species_list']]);
  echo $N->top_menu();
 
  $species_sel = $H->species_selector('species_id','',['onchange' => 'edit_species()']);
