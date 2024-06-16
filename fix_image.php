@@ -179,7 +179,7 @@ function choose_fix($params) {
   <script type="text/javascript" src="js/frog.js"></script>
   <script type="text/javascript" src="js/fix_image.js"></script>
 </head>
-<body onload="fixer.init($x,$y,$w,$h,$x0,$y0,$w0,$h0,$ww,$hh,$ar)">
+<body onload="fixer.init($x,$y,$w,$h,$x0,$y0,$w0,$h0,$ww,$hh,$ar,{$params->next_image},{$params->previous_image})">
 <div id="main_div">
 <h1>Editing image: {$params->image_name} ($n left)</h1>
 <br/>
@@ -208,8 +208,8 @@ HTML;
   <td class="command" onclick="fixer.load_image($ni)" style="width: 100px">Next</td>
    
 HTML;
-
-  if ($is_thin) {
+ }
+ if ($is_thin) {
   echo <<<HTML
   <td class="command" onclick="fixer.use_top()    " style="width:100px;">Top</td>
   <td class="command" onclick="fixer.use_vmiddle()" style="width:100px;">Middle</td>
@@ -218,7 +218,7 @@ HTML;
   <td class="command" onclick="fixer.apply_fix()  " style="width:100px;">Apply</td>
 
 HTML;
-  } else {
+ } else {
   echo <<<HTML
   <td class="command" onclick="fixer.use_left()   " style="width:100px;">Left</td>
   <td class="command" onclick="fixer.use_hmiddle()" style="width:100px;">Middle</td>
@@ -227,8 +227,6 @@ HTML;
   <td class="command" onclick="fixer.apply_fix()  " style="width:100px;">Apply</td>
 
 HTML;
-
-  }
  }
  
  echo <<<HTML
@@ -379,7 +377,7 @@ HTML;
  if ($params->previous_image) {
   $pi = $params->previous_image;
   echo <<<HTML
-  <td class="command" onclick="skip_previous" style="width:100px;">Previous</td>
+  <td class="command" onclick="skip_previous()" style="width:100px;">Previous</td>
    
 HTML;
  }
@@ -387,7 +385,7 @@ HTML;
  if ($params->next_image) {
   $ni = $params->next_image;
   echo <<<HTML
-  <td class="command" onclick="skip_next" style="width: 100px">Next</td>
+  <td class="command" onclick="skip_next()" style="width: 100px">Next</td>
    
 HTML;
  }
