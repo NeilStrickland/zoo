@@ -11,6 +11,7 @@ species.munch = function(x) {
  this.common_name = x.common_name;
  this.common_group = x.common_group;
  this.images = x.images;
+ this.sounds = x.sounds;
  this.url = x.url; 
 
  this.next_image = {};
@@ -52,35 +53,65 @@ species.random_image = function() {
 species.image_url = function(i) {
  if (image_data && image_data[i]) {
   return image_data[i];
- } else {
+ } else if (i) {
   return '/zoo/send/send_image.php?id=' + i;
+ } else {
+  return '';
  }
 };
 
-species.set_src = function(e,image_id) {
+species.set_img_src = function(e,image_id) {
  e.image_id = image_id;
  e.src = this.image_url(image_id);
 }
 
 species.set_li_img = function() {
- this.set_src(this.main_img,this.random_image());
+ this.set_img_src(this.main_img,this.random_image());
 };
 
 species.rotate_image = function(e) {
  var s = e.image_id || '';
  var t = this.next_image[s];
  if (t) {
-  this.set_src(e,t);
+  this.set_img_src(e,t);
  } else {
-  this.set_src(e,this.random_image());
+  this.set_img_src(e,this.random_image());
  }
 };
+
+species.random_sound = function() {
+ if (! this.sounds) {
+  return null;
+ }
+
+ var n = this.sounds.length;
+ var i = Math.floor(Math.random() * n);
+ return this.sounds[i];
+};
+
+species.sound_url = function(i) {
+ if (sound_data && sound_data[i]) {
+  return sound_data[i];
+ } else if (i) {
+  return '/zoo/send/send_sound.php?id=' + i;
+ } else {
+  return '';
+ }
+};
+
+species.set_sound_src = function(e,sound_id) {
+ e.sound_id = sound_id;
+ if (e.sound_id) {
+  var u = this.sound_url(sound_id);
+  e.src = u;
+ }
+}
 
 species.set_comparison = function(g) {
  var me = this;
  
  this.comparison_span.innerHTML = g.text;
- g.set_src(this.comparison_img,g.random_image());
+ g.set_img_src(this.comparison_img,g.random_image());
  this.comparison_img.onclick = function() {
   g.rotate_image(me.comparison_img);
  }
@@ -154,6 +185,9 @@ quiz.init = function() {
  this.is_mobile = 
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
  
+ this.names = names;
+ this.mode = mode;
+
  this.all_species = [];
  n = all_species.length;
 
@@ -190,7 +224,8 @@ quiz.init = function() {
   'options_box',
   'mark_box',
   'species_picture_div',
-  'species_picture'
+  'species_picture',
+  'species_sound'
  ];
 
  for (i in ids) {
@@ -255,7 +290,28 @@ quiz.show_question = function() {
  
  this.selected_id = j;
  this.selected_species = s;
- this.selected_species.set_src(this.species_picture,this.selected_species.random_image());
+ this.species_sound.pause();
+ this.species_sound.muted = true;
+ if (this.mode == 'images') {
+  this.selected_species.set_img_src(this.species_picture,this.selected_species.random_image());
+  this.species_sound.autoplay = false;
+  this.species_sound.muted = true;
+  this.selected_species.set_sound_src(this.species_sound,this.selected_species.random_sound());
+  if (this.species_sound.sound_id) {
+   this.species_sound.load();
+  }
+ } else {
+  this.species_picture.style.display = 'none';
+  this.selected_species.set_img_src(this.species_picture,this.selected_species.random_image());
+  this.species_sound.autoplay = true;
+  this.species_sound.muted = false;
+  this.selected_species.set_sound_src(this.species_sound,this.selected_species.random_sound());
+  if (this.species_sound.sound_id) {
+   this.species_sound.muted = false;
+   this.species_sound.load();
+   this.species_sound.play();
+  }
+ } 
  if (! this.is_mobile) {
   this.answer_box.focus();
  }
@@ -272,7 +328,7 @@ quiz.show_question = function() {
    if (l < m) {
     s = this.options[l];
     td = document.createElement('td');
-    if (names == 'scientific' || ! s.common_name) {
+    if (this.names == 'scientific' || ! s.common_name) {
      td.innerHTML = s.genus + '<br/>' + s.species;
      td.answer = s.genus + ' ' + s.species;
     } else {
@@ -383,6 +439,16 @@ quiz.mark_answer = function() {
   this.percent_good_td.innerHTML = this.percent_good;
   this.percent_ok_td.innerHTML   = this.percent_ok;
   this.percent_bad_td.innerHTML  = this.percent_bad;
+ }
+
+ if (this.mode == 'images') {
+  if (this.species_sound.sound_id) {
+   this.species_sound.muted = false;
+   this.species_sound.load();
+   this.species_sound.play();
+  }
+ } else {
+  this.species_picture.style.display = 'block';
  }
 
  this.state = 'answered';
