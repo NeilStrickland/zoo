@@ -3,6 +3,7 @@
 //header('Content-type: text/plain');
 
 require_once('include/zoo.inc');
+set_time_limit(900);
 
 $params = get_params();
 
