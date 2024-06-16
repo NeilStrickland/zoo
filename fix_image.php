@@ -300,10 +300,10 @@ function apply_fix($params) {
  $w0 = imagesx($img);
  $h0 = imagesy($img);
 
- $cx = get_optional_parameter('crop_x',0);
- $cy = get_optional_parameter('crop_y',0);
- $cw = get_optional_parameter('crop_w',$w0);
- $ch = get_optional_parameter('crop_h',$h0);
+ $cx = (int) get_optional_parameter('crop_x',0);
+ $cy = (int) get_optional_parameter('crop_y',0);
+ $cw = (int) get_optional_parameter('crop_w',$w0);
+ $ch = (int) get_optional_parameter('crop_h',$h0);
 
  if ($cx < 0 || $cx+$cw > $w0 || $cy < 0 || $cy+$ch > $h0) {
   # pad the image
