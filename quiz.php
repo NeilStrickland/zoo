@@ -183,6 +183,10 @@ function choose_quiz_tab() {
  if ($detect->isMobile()) {
  echo <<<HTML
  <form name="main_form" action="quiz.php" method="GET" target="_blank">
+ <input type="hidden" name="command" value="try"/>
+  <input type="hidden" name="names" value="scientific"/>
+  <input type="hidden" name="view_type" value="all"/>
+  <input type="hidden" name="id" value="0"/>
   <table width="100%" class="edged">
 
 HTML
