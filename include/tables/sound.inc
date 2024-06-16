@@ -27,11 +27,11 @@ SELECT
  x.file_name,
   x.extension,
  s.class,
- s.order,
+ s.`order`,
  s.family,
  s.genus,
  s.species,
- CONCAT(s.genus,' ',s.species) AS binomial,
+ (s.genus || ' ' || s.species) AS binomial,
  s.common_name,
  s.common_group
 FROM tbl_sounds x

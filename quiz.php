@@ -31,13 +31,14 @@ function get_params() {
  $params->id = (int) get_optional_parameter('id',0);
  $params->command = get_restricted_parameter('command',['choose','view','tree','csv','try','offline'],'try');
  $params->names = get_restricted_parameter('names',['common','scientific'],'scientific');
+ $params->mode = get_restricted_parameter('mode',['images','sounds'],'images');
  $params->quiz_group = null;
  $params->taxa = null;
- $params->mode = null;
+ $params->group_type = null;
  if ($params->id) {
   $params->quiz_group = $zoo->load('quiz_group',$params->id);
   if ($params->quiz_group) {
-   $params->mode = 'group';
+   $params->group_type = 'group';
   }
  } else {
   $taxa = [];
@@ -49,10 +50,10 @@ function get_params() {
   }
   if ($taxa) {
    $params->taxa = $taxa;
-   $params->mode = 'taxa';
+   $params->group_type = 'taxa';
   }
  }
- if (! $params->mode) {
+ if (! $params->group_type) {
   $params->command = 'choose';
  }
 
@@ -79,11 +80,11 @@ function load_species($params) {
  global $zoo;
 
  $species = array();
- if ($params->mode == 'group') {
+ if ($params->group_type == 'group') {
   $group = $params->quiz_group;
   $params->title = $group->name;
   $species = $group->load_members();
- } else if ($params->mode == 'taxa') {
+ } else if ($params->group_type == 'taxa') {
   $species = [];
   $i = 0;
   $title = '';
@@ -121,6 +122,7 @@ function do_command(c,id) {
  document.main_form.command.value = c;
  document.main_form.id.value = id;
  document.main_form.names.value = document.names_form.names.value;
+ document.main_form.mode.value = document.names_form.mode.value;
  document.main_form.submit();
 }
 
@@ -131,6 +133,7 @@ function view_quiz(id, type) {
 
 function try_taxa_quiz() {
  document.taxa_form.names.value = document.names_form.names.value;
+ document.taxa_form.mode.value = document.names_form.mode.value;
  document.taxa_form.submit();
 }
 
@@ -147,8 +150,16 @@ JS;
  <br/>
   <form name="names_form">
    Names: 
-   <input type="radio" name="names" id="names_common" value="common"/><label for="names_common">Common</label>
-   <input type="radio" name="names" id="names_scientific" value="scientific"/><label for="names_scientific">Scientific</label>
+   <input type="radio" name="names" id="names_common" value="common"/>
+   <label for="names_common">Common</label>
+   <input type="radio" name="names" id="names_scientific" value="scientific" checked="checked"/>
+   <label for="names_scientific">Scientific</label>
+   &nbsp;&nbsp;&nbsp;
+   Mode:
+   <input type="radio" name="mode" id="mode_images" value="images" checked="checked"/>
+   <label for="mode_images">Images</label>
+   <input type="radio" name="mode" id="mode_sounds" value="sounds"/>
+   <label for="mode_sounds">Sounds</label>
   </form>
   <br/>
 
@@ -185,6 +196,7 @@ function choose_quiz_tab() {
  <form name="main_form" action="quiz.php" method="GET" target="_blank">
  <input type="hidden" name="command" value="try"/>
   <input type="hidden" name="names" value="scientific"/>
+  <input type="hidden" name="mode" value="images"/>
   <input type="hidden" name="view_type" value="all"/>
   <input type="hidden" name="id" value="0"/>
   <table width="100%" class="edged">
@@ -217,6 +229,7 @@ HTML;
  <form name="main_form" action="quiz.php" method="GET" target="_blank">
   <input type="hidden" name="command" value="try"/>
   <input type="hidden" name="names" value="scientific"/>
+  <input type="hidden" name="mode" value="images"/>
   <input type="hidden" name="view_type" value="all"/>
   <input type="hidden" name="id" value="0"/>
   <table class="edged">
@@ -362,8 +375,10 @@ HTML;
 <script type="text/javascript">
 
 image_data = null;
+sound_data = null;
 
 names = '{$params->names}';
+mode = '{$params->mode}';
 
 all_species=[
 
@@ -377,23 +392,31 @@ HTML;
    $u = '';
   }
 
-  if ($species->images) {
-   $ii = array();
+  if ((($params->mode == 'images') && $species->images) || 
+      (($params->mode == 'sounds') && $species->sounds)) {
+   $ii = [];
    foreach($species->images as $i) {
     $ii[] = $i->id;
    } 
    $ii = '[' . implode(',',$ii) . ']';
    
+   $ss = [];
+   foreach($species->sounds as $s) {
+    $ss[] = $s->id;
+   }
+   $ss = '[' . implode(',',$ss) . ']';
+
    echo <<<HTML
     { 'id' : {$species->id},
       'order' : '{$species->order}',
-       'family' : '{$species->family}',
-       'genus' : '{$species->genus}',
-       'species' : '{$species->species}',
-       'common_name' : "{$species->common_name}",
-       'common_group' : '{$species->common_group}',
-       'images' : $ii,
-       'url' : '{$u}' 
+      'family' : '{$species->family}',
+      'genus' : '{$species->genus}',
+      'species' : '{$species->species}',
+      'common_name' : "{$species->common_name}",
+      'common_group' : '{$species->common_group}',
+      'images' : $ii,
+      'sounds' : $ss,
+      'url' : '{$u}' 
     },
 
 HTML;
@@ -445,6 +468,7 @@ HTML;
 
   <div id="species_picture_div" style="width: 400px; overflow: hidden;">
    <img id="species_picture" width="400px" src=""/>
+   <audio id="species_sound" style="display: none"></audio>
   </div>
   <br/>
   <div>

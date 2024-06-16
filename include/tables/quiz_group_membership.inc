@@ -27,18 +27,18 @@ SELECT
  g.name AS quiz_group_name,
  x.species_id,
  s.class,
- s.order,
+ s.`order`,
  s.family,
  s.genus,
  s.species,
- CONCAT(s.genus,' ',s.species) AS binomial,
+ (s.genus || ' ' || s.species) AS binomial,
  s.common_name,
  s.common_group
 FROM tbl_quiz_group_memberships x
  LEFT JOIN tbl_quiz_groups g ON x.quiz_group_id = g.id
   LEFT JOIN tbl_species s ON x.species_id = s.id
 WHERE %s
- ORDER BY s.class,s.order,s.family,s.genus,s.species,s.id,x.id
+ ORDER BY s.class,s.`order`,s.family,s.genus,s.species,s.id,x.id
 SQL
 );
 

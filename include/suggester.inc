@@ -7,7 +7,7 @@ class species_suggester extends frog_suggester {
   $this->type = 'species';
   $this->table_name = 'tbl_species x';
   $this->descriptor_query = <<<SQL
-SELECT CONCAT(x.genus, ' ' , x.species, ' (',x.common_name,')') 
+SELECT (x.genus || ' ' || x.species || ' (' || x.common_name || ')') 
 FROM tbl_species x WHERE x.id = %s LIMIT 0,1
 SQL
 ; }
@@ -16,7 +16,7 @@ SQL
   return <<<SQL
 SELECT
  x.id AS k,
- CONCAT(x.genus, ' ' , x.species, ' (',x.common_name,')') AS v
+ (x.genus || ' ' || x.species || ' (' || x.common_name || ')') AS v
 FROM {$this->table_name}
 WHERE $where
 ORDER BY x.genus,x.species
@@ -54,7 +54,7 @@ class taxon_suggester extends frog_suggester {
   $this->type = 'taxon';
   $this->table_name = 'tbl_taxa x';
   $this->descriptor_query = <<<SQL
-SELECT CONCAT(x.name, ' (',x.trank,')') 
+SELECT (x.name || ' (' || x.trank || ')') 
 FROM tbl_taxa x WHERE x.id = %s LIMIT 0,1
 SQL
 ; }
@@ -65,7 +65,7 @@ SQL
   $q = <<<SQL
 SELECT
  x.id AS k,
- CONCAT(x.name, ' (',x.trank,')') AS v
+ (x.name || ' (' || x.trank || ')') AS v
 FROM {$this->table_name}
 WHERE x.name LIKE '%$s%'
 ORDER BY x.trank,x.name

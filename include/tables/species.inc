@@ -25,16 +25,16 @@ SELECT
  x.kingdom,
  x.phylum,
  x.class,
- x.order,
+ x.`order`,
  x.family,
  x.genus,
  x.species,
- CONCAT(x.genus,' ',x.species) AS binomial,
+ (x.genus || ' ' || x.species) AS binomial,
  x.common_name,
  x.common_group
 FROM tbl_species x
 WHERE %s
- ORDER BY x.class,x.order,x.family,x.genus,x.species,x.id
+ ORDER BY x.class,x.`order`,x.family,x.genus,x.species,x.id
 SQL
 );
 
