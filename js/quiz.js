@@ -272,8 +272,13 @@ quiz.show_question = function() {
    if (l < m) {
     s = this.options[l];
     td = document.createElement('td');
-    td.innerHTML = s.genus + '<br/>' + s.species;
-    td.answer = s.genus + ' ' + s.species;
+    if (names == 'scientific' || ! s.common_name) {
+     td.innerHTML = s.genus + '<br/>' + s.species;
+     td.answer = s.genus + ' ' + s.species;
+    } else {
+     td.innerHTML = s.common_name;
+     td.answer = s.common_name;
+    }
     this.set_option_handler(td);
     tr.appendChild(td);
    }

@@ -30,6 +30,7 @@ function get_params() {
  $params = new stdClass();
  $params->id = (int) get_optional_parameter('id',0);
  $params->command = get_restricted_parameter('command',['choose','view','tree','csv','try','offline'],'try');
+ $params->names = get_restricted_parameter('names',['common','scientific'],'scientific');
  $params->quiz_group = null;
  $params->taxa = null;
  $params->mode = null;
@@ -117,11 +118,20 @@ function choose_quiz() {
  $script = <<<JS
 
 function do_command(c,id) {
- window.open('quiz.php?id=' + id + '&command=' + c);
+ document.main_form.command.value = c;
+ document.main_form.id.value = id;
+ document.main_form.names.value = document.names_form.names.value;
+ document.main_form.submit();
 }
 
 function view_quiz(id, type) {
- window.open('quiz.php?id=' + id + '&command=view&view_type=' + type);
+ document.main_form.view_type.value = type;
+ do_command('view',id);
+}
+
+function try_taxa_quiz() {
+ document.taxa_form.names.value = document.names_form.names.value;
+ document.taxa_form.submit();
 }
 
 JS;
@@ -135,6 +145,13 @@ JS;
  echo <<<HTML
  <h1>All quizzes</h1>
  <br/>
+  <form name="names_form">
+   Names: 
+   <input type="radio" name="names" id="names_common" value="common"/><label for="names_common">Common</label>
+   <input type="radio" name="names" id="names_scientific" value="scientific"/><label for="names_scientific">Scientific</label>
+  </form>
+  <br/>
+
 HTML
 ;
 
@@ -143,6 +160,11 @@ HTML
  choose_taxa_tab();
  echo $H->tabber_end();
  
+  echo <<<HTML
+</form>
+
+HTML;
+
  $N->footer();
 }
 
@@ -160,55 +182,62 @@ function choose_quiz_tab() {
 
  if ($detect->isMobile()) {
  echo <<<HTML
- <table width="100%" class="edged">
+ <form name="main_form" action="quiz.php" method="GET" target="_blank">
+  <table width="100%" class="edged">
 
 HTML
   ;
 
  foreach($quizzes as $q) {
   echo <<<HTML
-  <tr>
-   <td colspan="4">{$q->name}</td>
-  </tr>
-  <tr>
-   <td width="33%" class="command" onclick="do_command('try',{$q->id})">Try</td>
-   <td width="33%" class="command" onclick="do_command('offline',{$q->id})">Offline</td>
-   <td width="33%" class="command" onclick="do_command('view',{$q->id})">View</td>
-  </tr>
+   <tr>
+    <td colspan="4">{$q->name}</td>
+   </tr>
+   <tr>
+    <td width="33%" class="command" onclick="do_command('try',{$q->id})">Try</td>
+    <td width="33%" class="command" onclick="do_command('offline',{$q->id})">Offline</td>
+    <td width="33%" class="command" onclick="do_command('view',{$q->id})">View</td>
+   </tr>
 
 HTML
 ;
  }
 
  echo <<<HTML
- </table>
+  </table>
+ </form>
 
 HTML;
  } else {
  echo <<<HTML
- <table class="edged">
+ <form name="main_form" action="quiz.php" method="GET" target="_blank">
+  <input type="hidden" name="command" value="try"/>
+  <input type="hidden" name="names" value="scientific"/>
+  <input type="hidden" name="view_type" value="all"/>
+  <input type="hidden" name="id" value="0"/>
+  <table class="edged">
 
 HTML
 ;
 
  foreach($quizzes as $q) {
   echo <<<HTML
-  <tr>
-   <td width="300">{$q->name}</td>
-   <td class="command" onclick="do_command('try',{$q->id})">Try</td>
-   <td class="command" onclick="do_command('offline',{$q->id})">Offline</td>
-   <td class="command" onclick="view_quiz({$q->id},'all')">View</td>
-   <td class="command" onclick="view_quiz({$q->id},'bad_images')">Add images</td>
-   <td class="command" onclick="view_quiz({$q->id},'bad_sounds')">Add sounds</td>
-  </tr>
+   <tr>
+    <td width="300">{$q->name}</td>
+    <td class="command" onclick="do_command('try',{$q->id})">Try</td>
+    <td class="command" onclick="do_command('offline',{$q->id})">Offline</td>
+    <td class="command" onclick="view_quiz({$q->id},'all')">View</td>
+    <td class="command" onclick="view_quiz({$q->id},'bad_images')">Add images</td>
+    <td class="command" onclick="view_quiz({$q->id},'bad_sounds')">Add sounds</td>
+   </tr>
 
 HTML
 ;
  }
 
  echo <<<HTML
- </table>
-
+  </table>
+ </form>
 HTML
   ;
  }
@@ -225,6 +254,7 @@ function choose_taxa_tab() {
  echo <<<HTML
 <form name="taxa_form" action="quiz.php" method="POST" target="_blank">
 <input type="hidden" name="command" value="try"/>
+<input type="hidden" name="names" value="scientific"/>
 
 HTML;
 
@@ -328,6 +358,8 @@ HTML;
 <script type="text/javascript">
 
 image_data = null;
+
+names = '{$params->names}';
 
 all_species=[
 
