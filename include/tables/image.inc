@@ -101,17 +101,29 @@ class image extends frog_object {
 
  function load_object() {
   $f = $this->full_file_name();
-  $is = getimagesize($f);
-  $t = $is['mime'];
 
-  if ($t == 'image/gif') {
-   $this->object = imagecreatefromgif($f);
-  } elseif ($t == 'image/jpeg') {
-   $this->object = imagecreatefromjpeg($f);
-  } elseif ($t == 'image/png') {
-   $this->object = imagecreatefrompng($f);
-  } else {
-   trigger_error("Unrecognised photo format for {$f}: {$t}",E_USER_ERROR);
+  $this->object = null;
+  try {
+   @$this->object = imagecreatefromjpeg($f);
+  } catch (Exception $e) {
+   $this->object = null;
+  }
+
+  if (! $this->object) {
+   $is = getimagesize($f);
+   $t = $is['mime'];
+ 
+   if ($t == 'image/gif') {
+    $this->object = imagecreatefromgif($f);
+   } elseif ($t == 'image/webp') {
+    $this->object = imagecreatefromwebp($f);
+   } elseif ($t == 'image/png') {
+    $this->object = imagecreatefrompng($f);
+   } elseif ($t == 'image/jpeg') {
+    $this->object = imagecreatefromjpeg($f);
+   } else {
+    trigger_error("Unrecognised photo format for {$f}: {$t}",E_USER_ERROR);
+   }
   }
  }
 }

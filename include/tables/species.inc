@@ -184,7 +184,16 @@ class species extends frog_object {
   $i->save();
   $i->file_name = 'image_' . $i->id . '.jpg';
   $i->save();
-  rename($filename,$zoo->image_dir . '/' . $i->file_name);
+  $ext = strtolower(pathinfo($filename,PATHINFO_EXTENSION));
+  if ($ext == 'jpg' || $ext == 'jpeg') {
+   rename($filename,$zoo->image_dir . '/' . $i->file_name);
+  } else if ($ext == 'webp') {
+   $im = imagecreatefromwebp($filename);
+   imagejpeg($im,$zoo->image_dir . '/' . $i->file_name);
+   imagedestroy($im);
+   unlink($filename);
+  }
+
   copy($zoo->image_dir . '/' . $i->file_name,
        $zoo->original_images_dir . '/' . $i->file_name);
   $y = new stdClass();

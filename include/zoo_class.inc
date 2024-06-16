@@ -97,7 +97,7 @@ class zoo_class extends frog {
      chdir($f_full);
      foreach($subdir_files as $g) {
       $ext = strtolower(pathinfo($g,PATHINFO_EXTENSION));
-      if ($ext == 'jpg' || $ext == 'jpeg') {
+      if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'webp') {
        $y = $x->add_image($g);
        $result[] = $y;
       }
