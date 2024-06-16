@@ -16,7 +16,7 @@ fixer.right_bar = null;
 fixer.top_bar = null;
 fixer.bottom_bar = null;
 
-fixer.init = function(x,y,w,h,x0,y0,w0,h0,ww,hh,ar) {
+fixer.init = function(x,y,w,h,x0,y0,w0,h0,ww,hh,ar,next_image,previous_image) {
  var me = this;
  
  this.x = x;
@@ -30,6 +30,8 @@ fixer.init = function(x,y,w,h,x0,y0,w0,h0,ww,hh,ar) {
  this.ww = ww;
  this.hh = hh;
  this.ar = ar;
+ this.next_image = next_image;
+ this.previous_image = previous_image;
 
  this.is_fat = (this.w0 > this.ar * this.h) ? 1 : 0;
  
@@ -382,5 +384,10 @@ fixer.delete_image = function() {
  }
 
  this.main_image.style.display = 'none';
+ if (this.next_image) {
+  this.load_image(this.next_image);
+ } else if (this.previous_image) {
+  this.load_image(this.previous_image);
+ }
 // window.close();
 }
