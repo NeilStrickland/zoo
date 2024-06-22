@@ -58,7 +58,7 @@ class taxon extends frog_object {
  function load_species() {
   global $zoo;
 
-  $q = "x.{$this->trank}='{$this->name}'";
+  $q = "x.`{$this->trank}`='{$this->name}'";
   $this->species = $zoo->load_where('species',$q);
   return $this->species;
  }
