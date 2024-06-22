@@ -346,11 +346,15 @@ quiz.show_question = function() {
  this.options_box.appendChild(this.options_table);
 };
 
+quiz.play_sound = function() {
+ this.species_sound.play();
+};
+
 quiz.set_option_handler = function(td) {
  var me = this;
  
  td.onclick = function() { me.use_option(td.answer); };
-}
+};
 
 quiz.use_option = function(s) {
  this.answer_box.value = s;

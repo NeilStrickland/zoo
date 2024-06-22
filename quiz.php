@@ -58,11 +58,11 @@ function get_params() {
  }
 
  if ($params->command == 'view') {
-  $params->view_type = get_restricted_parameter('view_type',['all','bad_images','bad_sounds'],'all');
-  if ($params->view_type == 'bad_images') {
+  $params->view_type = get_restricted_parameter('view_type',['all','bad_images','all_images','bad_sounds','all_sounds'],'all');
+  if ($params->view_type == 'bad_images' || $params->view_type == 'all_images') {
    $params->show_images = 1;
    $params->show_sounds = 0;
-  } else if ($params->view_type == 'bad_sounds') {
+  } else if ($params->view_type == 'bad_sounds' || $params->view_type == 'all_sounds') {
    $params->show_images = 0;
    $params->show_sounds = 1;
   } else {
@@ -154,7 +154,7 @@ JS;
    <label for="names_common">Common</label>
    <input type="radio" name="names" id="names_scientific" value="scientific" checked="checked"/>
    <label for="names_scientific">Scientific</label>
-   &nbsp;&nbsp;&nbsp;
+   <br/>
    Mode:
    <input type="radio" name="mode" id="mode_images" value="images" checked="checked"/>
    <label for="mode_images">Images</label>
@@ -455,6 +455,12 @@ HTML;
 HTML;
  }
  
+ if ($params->mode == 'sounds') {
+  $pb = "<button class='command' onclick='quiz.play_sound()'>Play</button>";
+ } else {
+  $pb = '';
+ }
+
  echo <<<HTML
 
 </script>
@@ -467,8 +473,8 @@ HTML;
   <h2 id="questions_h2">Questions</h2>
 
   <div id="species_picture_div" style="width: 400px; overflow: hidden;">
+   $pb<audio id="species_sound" style="display: none"></audio>
    <img id="species_picture" width="400px" src=""/>
-   <audio id="species_sound" style="display: none"></audio>
   </div>
   <br/>
   <div>
