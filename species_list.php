@@ -49,6 +49,7 @@ function show_page($params) {
  $nb = $H->popup_button('Add a new species','species_info.php?command=new');
 
 echo <<<HTML
+ echo <<<HTML
 <h1>Species</h1>
 <br>
 <form name="main_form">
