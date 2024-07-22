@@ -48,7 +48,6 @@ function show_page($params) {
  $cb = $H->checkbox('show_all',$params->show_all,['onchange' => 'document.main_form.submit()']);
  $nb = $H->popup_button('Add a new species','species_info.php?command=new');
 
-echo <<<HTML
  echo <<<HTML
 <h1>Species</h1>
 <br>
