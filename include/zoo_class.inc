@@ -3,7 +3,9 @@
 class zoo_class extends frog {
  public
   $species_index,$all_species,$data_sources,$data_sources_by_code,$data_sources_by_name,
-  $temp_images_dir,$data_dir,$image_dir,$image_url,$image_url_base,
+  $data_dir,
+  $temp_images_dir,$image_dir,$image_url,$image_url_base,
+  $temp_sounds_dir,$sound_dir,$sound_url,$sound_url_base,
   $global_data_dir,$original_images_dir,$html,$nav;
 
  function make_species_index($force = 0) {
@@ -95,7 +97,7 @@ class zoo_class extends frog {
      chdir($f_full);
      foreach($subdir_files as $g) {
       $ext = strtolower(pathinfo($g,PATHINFO_EXTENSION));
-      if ($ext == 'jpg' || $ext == 'jpeg') {
+      if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'webp') {
        $y = $x->add_image($g);
        $result[] = $y;
       }
@@ -107,6 +109,64 @@ class zoo_class extends frog {
      }
     }     
    } else if (preg_match('/^([a-z]+) ([a-z]+) ?[0-9]*\.jpg$/',$f0,$m)) {
+    $g = $m[1];
+    $s = $m[2];
+    if (isset($ix[$g]) && isset($ix[$g][$s])) {
+     $x = $ix[$g][$s];
+     $y = $x->add_image($f_full);
+     $result[] = $y;
+    }
+   }
+  }
+ }
+
+ function attach_sounds($cleanup = 0) {
+  $ix = $this->make_species_index();
+  $files = scandir($this->temp_sounds_dir);
+  $result = array();
+
+  $latest = null;
+  $latest_file = $this->temp_sounds_dir . '/Latest/id.txt';
+
+  if (file_exists($latest_file)) {
+   $latest_id = (int) file_get_contents($latest_file);
+   $latest = $this->load('species',$latest_id);
+  }
+  
+  foreach($files as $f) {
+   $f_full = $this->temp_sounds_dir . '/' . $f;
+   $f0 = strtolower(str_replace('_',' ',$f));
+
+   if (is_dir($f_full)) {
+    $x = null;
+    if (preg_match('/^([a-z]+) ([a-z]+)$/',$f0,$m)) {
+     $g = $m[1];
+     $s = $m[2];
+     if (isset($ix[$g]) && isset($ix[$g][$s])) {
+      $x = $ix[$g][$s];
+     }
+    } else if ($f == 'Latest' && $latest) {
+     $x = $latest;
+    }
+
+    if ($x) {
+     $subdir_files = scandir($f_full);
+     $cwd = getcwd();
+     chdir($f_full);
+     foreach($subdir_files as $g) {
+      $ext = strtolower(pathinfo($g,PATHINFO_EXTENSION));
+      if ($ext == 'mp3' || $ext == 'wav') {
+       $y = $x->add_sound($g);
+       $result[] = $y;
+      }
+     }
+     chdir($cwd);
+
+     if ($cleanup && count(scandir($f_full)) <= 2) {
+      rmdir($f_full);
+     }
+    }     
+   } else if (preg_match('/^([a-z]+) ([a-z]+) ?[0-9]*\.(mp3|wav)$/',$f0,$m)) {
     $g = $m[1];
     $s = $m[2];
     if (isset($ix[$g]) && isset($ix[$g][$s])) {
@@ -197,7 +257,7 @@ class zoo_class extends frog {
   $taxa->family  = '';
   $taxa->genus   = '';
   $taxa->species = '';
-  $ranks = array('Class','Order','Family','Genus','Species');
+  $tranks = array('Kingdom','Phylum','Class','Order','Family','Genus','Species');
 
   if (!is_null($box)) {
    foreach ($box as $row) {
@@ -209,7 +269,7 @@ class zoo_class extends frog {
      }
      $v = trim($v);
 
-     foreach ($ranks as $r) {
+     foreach ($tranks as $r) {
       if (trim($k) == $r . ':') {
        $rl = strtolower($r);
        $taxa->$rl = $v;
@@ -341,6 +401,69 @@ class zoo_class extends frog {
    $s->delete();
   }
  } 
+
+ function tabulate_taxa() {
+  $taxa = $this->load_all('taxa');
+  $taxa_index = [];
+  foreach($taxa as $t) {
+   $t->is_new = false;
+   if (! isset($taxa_index[$t->trank])) {
+    $taxa_index[$t->trank] = [];
+   }
+   $taxa_index[$t->trank][$t->name] = $t;
+  }
+
+  $new_taxa = [];
+  $species = $this->load_all('species');
+  $tranks = taxon::$tranks;
+  $nr = count($tranks);
+  foreach($species as $s) {
+   for($k = 0; $k < $nr; $k++) {
+    $r = $tranks[$k];
+    $n = $s->$r;
+    if ($n && ! isset($taxa_index[$r][$n])) {
+     $t = $this->new_object('taxon');
+     $t->trank = $r;
+     $t->name = $n;
+     $t->is_new = true;
+     $t->save();
+     $taxa_index[$r][$n] = $t;
+     $taxa[] = $t;
+     $new_taxa[] = $t;
+    }
+   }
+  }
+
+  foreach($taxa as $t) {
+   $t->new_parent_id = null;
+   if ($t->trank_number() > 0 && ! $t->parent_id) {
+    $x = $t->find_parent();
+    if (! $x->error) {
+     $t->parent_id = $x->parent_id;
+     $t->new_parent_id = $x->parent_id;
+     $t->save();
+    }
+   }
+  }
+
+  return $taxa;
+ }
+
+ function taxa_tree() {
+  $taxa = $this->load_all('taxa');
+  $tree = [];
+
+  foreach($taxa as $t) {
+   $t->load_children();
+   if (! $t->children) {
+    $tree[] = $t->chain();
+   }
+  }
+
+  usort($tree, array('taxon', 'compare_chains'));
+
+  return $tree;
+ }
 }
 
 ?>
