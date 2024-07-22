@@ -3,7 +3,7 @@
 class zoo_class extends frog {
  public
   $species_index,$all_species,$data_sources,$data_sources_by_code,$data_sources_by_name,
-  $data_dir,
+  $data_dir,$public_pictures_dir,
   $temp_images_dir,$image_dir,$image_url,$image_url_base,
   $temp_sounds_dir,$sound_dir,$sound_url,$sound_url_base,
   $global_data_dir,$original_images_dir,$html,$nav;

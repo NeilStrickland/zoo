@@ -14,16 +14,9 @@ if (! $zoo->global_data_dir) {
  $zoo->global_data_dir = realpath($_SERVER['DOCUMENT_ROOT'] . '/../data');
 }
 
-$zoo->data_dir = $zoo->global_data_dir . "/zoo";
-//$cred = json_decode(trim(file_get_contents($zoo->data_dir . '/cred.txt')));
-//$zoo->db_name = isset($cred->db_name) ? $cred->db_name : 'zoo';
-//$db_user = isset($cred->db_user) ? $cred->db_user : 'zoo';
-//$db_pass = $cred->db_pass;
-//$zoo->connect($db_user,$db_pass);
-//$cred = null;
-//$db_user = null;
-//$db_pass = null;
+$zoo->public_pictures_dir = getenv('PUBLICPICTURES');
 
+$zoo->data_dir = $zoo->global_data_dir . "/zoo";
 $zoo->db_type = 'sqlite';
 $zoo->db_file = $zoo->data_dir . '/nps_zoo.db';
 $zoo->connect();
@@ -42,6 +35,8 @@ $zoo->register('sound');
 $zoo->register('quiz_group');
 $zoo->register('quiz_group_membership');
 $zoo->register('taxon','taxa');
+$zoo->register('photo');
+$zoo->register('photo_species');
 
 $zoo->load_table('data_source');
 $zoo->load_data_sources();
