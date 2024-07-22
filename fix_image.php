@@ -30,11 +30,42 @@ function get_params() {
  
  $params->id = (int) get_optional_parameter('id',0);
 
+ $w = <<<SQL
+x.width IS NULL OR x.height IS NULL OR
+x.width = 0 OR x.height = 0 OR
+x.width < $r_min * x.height OR x.width > $r_max * x.height
+   
+SQL;
+  
+ $params->bad_images =
+ $zoo->load_where_ordered('images',$w,'id');
+ 
+ $ni = 0;
+ $pi = 0;
+ $id = $params->id;
+
+ foreach($params->bad_images as $x) {
+  if ($x->id < $id && (($pi == 0) || ($x->id > $pi))) {
+   $pi = $x->id;
+  }
+
+  if ($x->id > $id && (($ni == 0) || ($x->id < $ni))) {
+   $ni = $x->id;
+  }
+ }
+
+ $params->next_image = $ni;
+ $params->previous_image = $pi;
+
  if ($params->id) {
   $params->image = $zoo->load('image',$params->id);
   if (! $params->image) {
    error_page('Image does not exist');
    exit;
+  }
+  $params->image_name = $params->image->binomial;
+  if ($params->image->common_name) {
+   $params->image_name .= ' (' . $params->image->common_name . ')';
   }
   
   $params->image_url  = $params->image->url();
@@ -49,20 +80,7 @@ function get_params() {
   
   $params->image->set_size(1);
   $params->image->load_object();
-
-  $params->next_image = null;
-  $params->previous_image = null;
-  $params->bad_images = array();
  } else {
-  $w = <<<SQL
-x.width IS NULL OR x.height IS NULL OR
-x.width = 0 OR x.height = 0 OR
-x.width < $r_min * x.height OR x.width > $r_max * x.height
-  
-SQL;
- 
-  $params->bad_images =
-   $zoo->load_where_ordered('images',$w,'id');
 
   if (! $params->bad_images) {
    no_bad_images_page($params);
@@ -85,22 +103,6 @@ SQL;
   $params->image_url  = $params->image->url();
   $params->image_file = $params->image->full_file_name();
 
-  $ni = 0;
-  $pi = 0;
-  $id = $params->id;
- 
-  foreach($params->bad_images as $x) {
-   if ($x->id < $id && (($pi == 0) || ($x->id > $pi))) {
-    $pi = $x->id;
-   }
-
-   if ($x->id > $id && (($ni == 0) || ($x->id < $ni))) {
-    $ni = $x->id;
-   }
-  }
-
-  $params->next_image = $ni;
-  $params->previous_image = $pi;
 
  }
  
@@ -177,9 +179,9 @@ function choose_fix($params) {
   <script type="text/javascript" src="js/frog.js"></script>
   <script type="text/javascript" src="js/fix_image.js"></script>
 </head>
-<body onload="fixer.init($x,$y,$w,$h,$x0,$y0,$w0,$h0,$ww,$hh,$ar)">
+<body onload="fixer.init($x,$y,$w,$h,$x0,$y0,$w0,$h0,$ww,$hh,$ar,{$params->next_image},{$params->previous_image})">
 <div id="main_div">
-<h1>Editing image ($n left)</h1>
+<h1>Editing image: {$params->image_name} ($n left)</h1>
 <br/>
 <table class="edged">
  <tr>
@@ -206,8 +208,8 @@ HTML;
   <td class="command" onclick="fixer.load_image($ni)" style="width: 100px">Next</td>
    
 HTML;
-
-  if ($is_thin) {
+ }
+ if ($is_thin) {
   echo <<<HTML
   <td class="command" onclick="fixer.use_top()    " style="width:100px;">Top</td>
   <td class="command" onclick="fixer.use_vmiddle()" style="width:100px;">Middle</td>
@@ -216,7 +218,7 @@ HTML;
   <td class="command" onclick="fixer.apply_fix()  " style="width:100px;">Apply</td>
 
 HTML;
-  } else {
+ } else {
   echo <<<HTML
   <td class="command" onclick="fixer.use_left()   " style="width:100px;">Left</td>
   <td class="command" onclick="fixer.use_hmiddle()" style="width:100px;">Middle</td>
@@ -225,8 +227,6 @@ HTML;
   <td class="command" onclick="fixer.apply_fix()  " style="width:100px;">Apply</td>
 
 HTML;
-
-  }
  }
  
  echo <<<HTML
@@ -298,10 +298,10 @@ function apply_fix($params) {
  $w0 = imagesx($img);
  $h0 = imagesy($img);
 
- $cx = get_optional_parameter('crop_x',0);
- $cy = get_optional_parameter('crop_y',0);
- $cw = get_optional_parameter('crop_w',$w0);
- $ch = get_optional_parameter('crop_h',$h0);
+ $cx = (int) get_optional_parameter('crop_x',0);
+ $cy = (int) get_optional_parameter('crop_y',0);
+ $cw = (int) get_optional_parameter('crop_w',$w0);
+ $ch = (int) get_optional_parameter('crop_h',$h0);
 
  if ($cx < 0 || $cx+$cw > $w0 || $cy < 0 || $cy+$ch > $h0) {
   # pad the image
@@ -365,7 +365,7 @@ function init() {
 </head>
 <body onload="init()">
 <div id="main_div">
-<h1>Edited image</h1>
+<h1>Edited image: {$params->image_name}</h1>
 <br/>
 <table>
  <tr>
@@ -377,7 +377,7 @@ HTML;
  if ($params->previous_image) {
   $pi = $params->previous_image;
   echo <<<HTML
-  <td class="command" onclick="skip_previous" style="width:100px;">Previous</td>
+  <td class="command" onclick="skip_previous()" style="width:100px;">Previous</td>
    
 HTML;
  }
@@ -385,7 +385,7 @@ HTML;
  if ($params->next_image) {
   $ni = $params->next_image;
   echo <<<HTML
-  <td class="command" onclick="skip_next" style="width: 100px">Next</td>
+  <td class="command" onclick="skip_next()" style="width: 100px">Next</td>
    
 HTML;
  }
@@ -402,6 +402,12 @@ HTML;
 HTML;
 }
 
+//////////////////////////////////////////////////////////////////////
 
+function no_bad_images_page($params) {
+ echo <<<HTML
+No bad images
+HTML;
+}
 
 ?>
