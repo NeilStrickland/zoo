@@ -6,6 +6,8 @@ $zoo->add_table(
  'species','species',		
  array(		
   'id' => array('type' => 'integer','notnull' => 'true'),
+  'kingdom' => array('type' => 'text'),
+  'phylum' => array('type' => 'text'),
   'class' => array('type' => 'text'),
   'order' => array('type' => 'text'),
   'family' => array('type' => 'text'),
@@ -20,29 +22,48 @@ $zoo->add_table(
  <<<SQL
 SELECT
  x.id,
+ x.kingdom,
+ x.phylum,
  x.class,
- x.order,
+ x.`order`,
  x.family,
  x.genus,
  x.species,
- CONCAT(x.genus,' ',x.species) AS binomial,
+ (x.genus || ' ' || x.species) AS binomial,
  x.common_name,
  x.common_group
 FROM tbl_species x
 WHERE %s
- ORDER BY x.class,x.order,x.family,x.genus,x.species,x.id
+ ORDER BY x.class,x.`order`,x.family,x.genus,x.species,x.id
 SQL
 );
 
 class species extends frog_object {
- public $id,$object,$class,$order,$family,$genus,$species,$binomial,
-  $common_name,$common_group,$images,$data_records,$data_records_by_source,
-  $data_records_by_code;
+ public $id,$object,$kingdom,$phylum,$class,$order,$family,$genus,$species,
+  $binomial,$common_name,$common_group,$images,$sounds,$quiz_groups,
+  $data_records,$data_records_by_source,$data_records_by_code,$species_id,
+  $external_id;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
 
   parent::__construct($zoo,'species',$id,$with_defaults);
+ }
+
+ function descriptor() {
+  if ($this->genus && $this->species) {
+   $s =  $this->genus . ' ' . $this->species;
+   if ($this->common_name) {
+    $s .= ' (' . $this->common_name . ')';
+   }
+   return $s;
+  } else if ($this->common_name) {
+   return $this->common_name;
+  } else if ($this->id) {
+   return 'Species ' . $this->id;
+  } else {
+   return 'New species';
+  }
  }
 
  function info_url() {
@@ -63,22 +84,62 @@ class species extends frog_object {
  function load_images() {
   global $zoo;
 
-  $this->images = $zoo->load_where('images',"species_id={$this->id}");
+  if ($this->id) {
+   $this->images = $zoo->load_where('images',"species_id={$this->id}");
+  } else {
+   $this->images = [];   
+  } 
+  return $this->images;
+ }
+
+ function load_sounds() {
+  global $zoo;
+
+  if ($this->id) {
+   $this->sounds = $zoo->load_where('sounds',"species_id={$this->id}");
+  } else {
+   $this->sounds = [];
+  }
+  return $this->sounds;
+ }
+
+ function load_quiz_groups() {
+  global $zoo;
+
+  if ($this->id) {
+   $this->quiz_groups = $zoo->load_where('quiz_group_membership',"species_id={$this->id}");
+  } else {
+   $this->quiz_groups = [];
+  }
+  return $this->quiz_groups;
  }
 
  function load_data_records() {
   global $zoo;
 
-  $rr = $zoo->load_where('data_records',"species_id={$this->id}");
-  $this->data_records = array();
-  foreach($rr as $r) {
-   $this->data_records[] = $r->subclass();
+  if ($this->id) {
+   $rr = $zoo->load_where('data_records',"species_id={$this->id}");
+   $this->data_records = array();
+   foreach($rr as $r) {
+    $this->data_records[] = $r->subclass();
+   }
+  } else {
+   $this->data_records = [];
   }
   
   $this->data_records_by_source =
    make_index($this->data_records,'data_source_id');
   $this->data_records_by_code =
    make_index($this->data_records,'data_source_code');
+
+  return $this->data_records;
+ }
+
+ function load_associated() {
+  $this->load_images();
+  $this->load_sounds();
+  $this->load_quiz_groups();
+  $this->load_data_records();
  }
 
  function add_data_record($data_source_id,$external_id) {
@@ -139,7 +200,16 @@ class species extends frog_object {
   $i->save();
   $i->file_name = 'image_' . $i->id . '.jpg';
   $i->save();
-  rename($filename,$zoo->image_dir . '/' . $i->file_name);
+  $ext = strtolower(pathinfo($filename,PATHINFO_EXTENSION));
+  if ($ext == 'jpg' || $ext == 'jpeg') {
+   rename($filename,$zoo->image_dir . '/' . $i->file_name);
+  } else if ($ext == 'webp') {
+   $im = imagecreatefromwebp($filename);
+   imagejpeg($im,$zoo->image_dir . '/' . $i->file_name);
+   imagedestroy($im);
+   unlink($filename);
+  }
+
   copy($zoo->image_dir . '/' . $i->file_name,
        $zoo->original_images_dir . '/' . $i->file_name);
   $y = new stdClass();
@@ -148,6 +218,26 @@ class species extends frog_object {
   $y->species_binomial = $this->binomial;
   $y->species_common_name = $this->common_name;
   $y->image_id = $i->id;
+  return $y;
+ }
+
+ function add_sound($filename) {
+  global $zoo;
+  
+  $i = $zoo->new_object('sound');
+  $i->species_id = $this->id;
+  $i->save();
+  $ext = strtolower(pathinfo($filename,PATHINFO_EXTENSION));
+  $i->file_name = 'sound_' . $i->id . '.' . $ext;
+  $i->save();
+  rename($filename,$zoo->sound_dir . '/' . $i->file_name);
+  $y = new stdClass();
+  $y->original_location = $filename;
+  $y->species_id = $this->id;
+  $y->species_binomial = $this->binomial;
+  $y->species_common_name = $this->common_name;
+  $y->image_id = $i->id;
+  $y->file_name = $i->file_name;
   return $y;
  }
 
