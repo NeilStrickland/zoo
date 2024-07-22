@@ -29,11 +29,11 @@ SELECT
  x.width,
  x.height,
  s.class,
- s.order,
+ s.`order`,
  s.family,
  s.genus,
  s.species,
- CONCAT(s.genus,' ',s.species) AS binomial,
+ (s.genus || ' ' || s.species) AS binomial,
  s.common_name,
  s.common_group
 FROM tbl_images x
@@ -84,7 +84,7 @@ class image extends frog_object {
 
  function geometry_string() {
   return
-   sprintf("%d x %d [%1.2f]",$this->width,$this->height,$this->aspect_ratio());
+   sprintf("%dx%d [%1.2f]",$this->width,$this->height,$this->aspect_ratio());
  }
  
  function set_size($save = false) {
@@ -101,17 +101,29 @@ class image extends frog_object {
 
  function load_object() {
   $f = $this->full_file_name();
-  $is = getimagesize($f);
-  $t = $is['mime'];
 
-  if ($t == 'image/gif') {
-   $this->object = imagecreatefromgif($f);
-  } elseif ($t == 'image/jpeg') {
-   $this->object = imagecreatefromjpeg($f);
-  } elseif ($t == 'image/png') {
-   $this->object = imagecreatefrompng($f);
-  } else {
-   trigger_error("Unrecognised photo format for {$f}: {$t}",E_USER_ERROR);
+  $this->object = null;
+  try {
+   @$this->object = imagecreatefromjpeg($f);
+  } catch (Exception $e) {
+   $this->object = null;
+  }
+
+  if (! $this->object) {
+   $is = getimagesize($f);
+   $t = $is['mime'];
+ 
+   if ($t == 'image/gif') {
+    $this->object = imagecreatefromgif($f);
+   } elseif ($t == 'image/webp') {
+    $this->object = imagecreatefromwebp($f);
+   } elseif ($t == 'image/png') {
+    $this->object = imagecreatefrompng($f);
+   } elseif ($t == 'image/jpeg') {
+    $this->object = imagecreatefromjpeg($f);
+   } else {
+    trigger_error("Unrecognised photo format for {$f}: {$t}",E_USER_ERROR);
+   }
   }
  }
 }
