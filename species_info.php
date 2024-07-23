@@ -45,6 +45,7 @@ class species_editor extends frog_object_editor {
    $this->sounds_tab();
    $this->data_records_tab();
    $this->quiz_groups_tab();
+   $this->photos_tab();
   }
   
   echo $H->tabber_end();
@@ -140,6 +141,23 @@ HTML;
   echo $H->edged_table_end();
   echo $H->tab_end();
  }
+
+ function photos_tab() {
+  global $zoo;
+  $H = $zoo->html;
+  $s = $this->object;
+
+  echo $H->tab_start('Photos');
+  foreach ($s->photos as $x) {
+   $t = $x->photo_dir . '/' . $x->photo_file_name;
+   if ($x->photo_description) { $t .= ': ' . $x->photo_description; }
+   if ($x->photo_location) { $t .= ', ' . $x->photo_location; }
+
+   echo $x->img() . '<br/>' . $t . '<br/><br/>' . PHP_EOL;
+  }
+  echo $H->tab_end();
+ }
+
 }
 
 (new species_editor())->run();
