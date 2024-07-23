@@ -3,7 +3,7 @@
 global $zoo;
 
 $zoo->add_table(
- 'photo_species','photo_speciess',		
+ 'photo_species','photo_species',	
  array(		
   'id' => array('type' => 'integer','notnull' => 'true'),
   'photo_id' => array('type' => 'integer','link' => 'photo'),
@@ -24,7 +24,8 @@ $zoo->add_table(
   'species' => array('type' => 'text'),
   'binomial' => array('type' => 'text'),
   'common_name' => array('type' => 'text'),
-  'common_group' => array('type' => 'text')
+  'common_group' => array('type' => 'text'),
+  'quality' => array('type' => 'integer')
  ),
  <<<SQL
 SELECT
@@ -45,8 +46,9 @@ SELECT
  s.species,
  (s.genus || ' ' || s.species) AS binomial,
  s.common_name,
- s.common_group
-FROM tbl_photo_speciess x
+ s.common_group,
+ x.quality
+FROM tbl_photo_species x
  LEFT JOIN tbl_photos p ON x.photo_id = p.id
   LEFT JOIN tbl_species s ON x.species_id = s.id
 WHERE %s
@@ -55,8 +57,10 @@ SQL
 );
 
 class photo_species extends frog_object {
- public $id,$object,$photo_id,$photo_dir,$photo_file_name,$photo_date,$photo_location,$photo_lat,$photo_lng,$photo_description,
-  $species_id,$class,$order,$family,$genus,$species,$binomial,$common_name,$common_group;
+ public $id,$object,
+  $photo_id,$photo_dir,$photo_file_name,$photo_date,$photo_location,$photo_lat,$photo_lng,$photo_description,
+  $species_id,$class,$order,$family,$genus,$species,$binomial,$common_name,$common_group,
+  $quality;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -93,6 +97,27 @@ class photo_species extends frog_object {
   } else {
    return $this->species;
   }
+ }
+
+ function full_file_name() {
+  global $zoo;
+  return $zoo->public_pictures_dir . '/' . $this->photo_dir . '/' . $this->photo_file_name;
+ }
+ 
+ function url() {
+  return "/zoo/send/send_photo.php?id={$this->photo_id}";
+ }
+
+ function img() {
+  return '<img width="800" src="' . $this->url() . '"/>';
+ }
+
+ function small_img() {
+  return '<img width="180" src="' . $this->url() . '"/>';
+ }
+
+ function tiny_img() {
+  return '<img width="90" src="' . $this->url() . '"/>';
  }
 }
 
