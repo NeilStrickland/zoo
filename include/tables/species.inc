@@ -42,7 +42,7 @@ class species extends frog_object {
  public $id,$object,$kingdom,$phylum,$class,$order,$family,$genus,$species,
   $binomial,$common_name,$common_group,$images,$sounds,$quiz_groups,
   $data_records,$data_records_by_source,$data_records_by_code,$species_id,
-  $external_id;
+  $external_id,$photos;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -135,11 +135,23 @@ class species extends frog_object {
   return $this->data_records;
  }
 
+ function load_photos() {
+  global $zoo;
+
+  if ($this->id) {
+   $this->photos = $zoo->load_where('photo_species',"species_id={$this->id}");
+  } else {
+   $this->photos = [];   
+  } 
+  return $this->photos;
+ }
+
  function load_associated() {
   $this->load_images();
   $this->load_sounds();
   $this->load_quiz_groups();
   $this->load_data_records();
+  $this->load_photos();
  }
 
  function add_data_record($data_source_id,$external_id) {
