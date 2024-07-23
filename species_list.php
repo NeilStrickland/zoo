@@ -54,6 +54,7 @@ function show_page($params) {
 <form name="main_form">
 <b>Search:</b><br/> $species_sel
 <button type="button" onclick="edit_species()">Edit</button>
+<button type="button" onclick="clear_species()">Clear</button>
 <br/><br/>
 <b>Taxa:</b><br/> $taxon_sel
 <br/><br/>
