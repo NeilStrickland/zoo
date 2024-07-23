@@ -33,7 +33,8 @@ SQL
 );
 
 class photo extends frog_object {
- public $id,$dir,$file_name,$date,$location,$lat,$lng,$description;
+ public $id,$dir,$file_name,$date,$location,$lat,$lng,$description,
+  $species,$species_by_species_id;
 
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -62,55 +63,48 @@ class photo extends frog_object {
   return '<img width="90" src="' . $this->url() . '"/>';
  }
 
- function aspect_ratio() {
-  if (! ($this->width && $this->height)) {
-   return 0;
+ function load_species() {
+  global $zoo;
+
+  $this->species = [];
+  if ($this->id) {
+   $this->species = $zoo->load_where('photo_species',"x.photo_id={$this->id}");
+  }
+  $this->species_by_species_id = make_index($this->species,'species_id');
+ }
+
+ function add_species($species_id) {
+  global $zoo;
+
+  if (! isset($this->species)) {
+   $this->load_species();
   }
 
-  return ((1.0 * $this->width)/($this->height));
+  if (! isset($this->species_by_species_id[$species_id])) {
+   $x = $zoo->new_object('photo_species');
+   $x->photo_id = $this->id;
+   $x->species_id = $species_id;
+   $x->save();
+   $x->load();
+   $this->species[] = $x;
+   $this->species_by_species_id[$species_id] = $x;
+  }
  }
 
- function geometry_string() {
-  return
-   sprintf("%dx%d [%1.2f]",$this->width,$this->height,$this->aspect_ratio());
- }
- 
- function set_size($save = false) {
-  $f = $this->full_file_name();
-  $is = getphotosize($f);
-  if ($is) {
-   $this->width = $is[0];
-   $this->height = $is[1];
-   if ($save) {
-    $this->save();
+ function parse_species() {
+  global $zoo;
+  $x = strtolower($this->description);
+  $x = strtr($x,',',' + ');
+  $x = strtr($x,"'","\\'");
+  $x = array_map('trim',explode('+',$x));
+  foreach($x as $y) {
+   $ss = $zoo->load_where('species',"LOWER(x.common_name)='{$y}'");
+   $w = explode(' ',$y);
+   if (! $ss && count($w) == 2) {
+    $ss = $zoo->load_where('species',"LOWER(x.genus)='{$w[0]}' AND LOWER(x.species)='{$w[1]}'");
    }
-  }
- }
-
- function load_object() {
-  $f = $this->full_file_name();
-
-  $this->object = null;
-  try {
-   @$this->object = photocreatefromjpeg($f);
-  } catch (Exception $e) {
-   $this->object = null;
-  }
-
-  if (! $this->object) {
-   $is = getphotosize($f);
-   $t = $is['mime'];
- 
-   if ($t == 'photo/gif') {
-    $this->object = photocreatefromgif($f);
-   } elseif ($t == 'photo/webp') {
-    $this->object = photocreatefromwebp($f);
-   } elseif ($t == 'photo/png') {
-    $this->object = photocreatefrompng($f);
-   } elseif ($t == 'photo/jpeg') {
-    $this->object = photocreatefromjpeg($f);
-   } else {
-    trigger_error("Unrecognised photo format for {$f}: {$t}",E_USER_ERROR);
+   if (count($ss) == 1) {
+    $this->add_species($ss[0]->id);
    }
   }
  }
