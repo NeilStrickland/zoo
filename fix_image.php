@@ -38,7 +38,7 @@ x.width < $r_min * x.height OR x.width > $r_max * x.height
 SQL;
   
  $params->bad_images =
- $zoo->load_where_ordered('images',$w,'id');
+ $zoo->load_where_ordered('images',$w,'x.id');
  
  $ni = 0;
  $pi = 0;
