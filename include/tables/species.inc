@@ -220,6 +220,11 @@ class species extends frog_object {
    imagejpeg($im,$zoo->image_dir . '/' . $i->file_name);
    imagedestroy($im);
    unlink($filename);
+  } else if ($ext == 'png') {
+   $im = imagecreatefrompng($filename);
+   imagejpeg($im,$zoo->image_dir . '/' . $i->file_name);
+   imagedestroy($im);
+   unlink($filename);
   }
 
   copy($zoo->image_dir . '/' . $i->file_name,
