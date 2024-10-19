@@ -1,5 +1,7 @@
 <?php
 
+ini_set('memory_limit','1000M');
+
 require_once('include/zoo.inc');
 
 $params = get_params();
