@@ -288,4 +288,10 @@ class data_record_fb extends data_record {
  }
 }
 
+class data_record_ab extends data_record {
+ function __construct($id = null,$with_defaults=1) {
+  parent::__construct($id,$with_defaults);
+ }
+}
+
 ?>
