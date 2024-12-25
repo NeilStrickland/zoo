@@ -355,7 +355,9 @@ fixer.keypress_handler = function(e) {
    case "ArrowLeft":  this.move_bars(-step,0,'move'); break;
    case "ArrowRight": this.move_bars( step,0,'move'); break;
    case "+"         : this.scale(step);    break;
+   case "="         : this.scale(step);    break;
    case "-"         : this.scale(-step);   break;
+   case "_"         : this.scale(-step);   break;
    default: return;
   }
  }
