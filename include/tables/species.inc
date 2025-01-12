@@ -34,7 +34,7 @@ SELECT
  x.common_group
 FROM tbl_species x
 WHERE %s
- ORDER BY x.class,x.`order`,x.family,x.genus,x.species,x.id
+ ORDER BY x.genus,x.species,x.id
 SQL
 );
 
