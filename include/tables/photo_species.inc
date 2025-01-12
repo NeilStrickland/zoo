@@ -52,7 +52,7 @@ FROM tbl_photo_species x
  LEFT JOIN tbl_photos p ON x.photo_id = p.id
   LEFT JOIN tbl_species s ON x.species_id = s.id
 WHERE %s
- ORDER BY p.date,p.file_name,p.id,x.id
+ ORDER BY s.genus,s.species,p.date,p.file_name,p.id,x.id
 SQL
 );
 
