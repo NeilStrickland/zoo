@@ -78,7 +78,9 @@ HTML;
 
 function handle_upload($params) {
  parse_file($params);
- wiki_download($params);
+ if ($params->force_wiki_download) {
+  wiki_download($params);
+ }
  match_species($params);
  report_page($params);
 }
@@ -116,14 +118,17 @@ function parse_file($params) {
    $x->family = '';
    $x->order = '';
    $x->class = '';
+   $x->phylum = '';
+   $x->kingdom = '';
+   $x->wiki_html = '';
    $x->wiki_family = '';
    $x->wiki_order = '';
    $x->wiki_class = '';
    
    if ($n > 2) { $x->common_name = $line[2]; }
    if ($n > 3) { $x->family      = $line[3]; }
-   if ($n > 3) { $x->order       = $line[4]; }
-   if ($n > 3) { $x->class       = $line[5]; }
+   if ($n > 4) { $x->order       = $line[4]; }
+   if ($n > 5) { $x->class       = $line[5]; }
    
    $params->species_to_add[] = $x;
   }
