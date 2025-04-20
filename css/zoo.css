@@ -4,6 +4,9 @@ body {
  margin: 0;
  margin-left: 10px;
  padding: 0;
+ box-sizing:border-box;
+ -webkit-box-sizing:border-box;
+ -moz-box-sizing:border-box;
  -webkit-text-size-adjust: none;
  -moz-text-size-adjust: none;
  -ms-text-size-adjust: none;
@@ -14,7 +17,10 @@ div.topmenu {
  left : 5px;
  top : 5px;
  height : 30px;
- width : 100%;
+ width : 90%;
+ box-sizing:border-box;
+ -webkit-box-sizing:border-box;
+ -moz-box-sizing:border-box;
 }
 
 div.topmenu button {
