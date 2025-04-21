@@ -13,6 +13,7 @@ $zoo->add_table(
   'lat' => array('type' => 'float'),
   'lng' => array('type' => 'float'),
   'description' => array('type' => 'text'),
+  'ignore' => array('type' => 'integer', 'default' => 0),
  ),
  array(
  ),
@@ -25,7 +26,8 @@ SELECT
  x.location,
  x.lat,
  x.lng,
- x.description
+ x.description,
+ x.ignore
 FROM tbl_photos x
 WHERE %s
  ORDER BY x.date,x.file_name,x.id
@@ -33,7 +35,7 @@ SQL
 );
 
 class photo extends frog_object {
- public $id,$dir,$file_name,$date,$location,$lat,$lng,$description,
+ public $id,$dir,$file_name,$date,$location,$lat,$lng,$description,$ignore,
   $species,$species_by_species_id;
 
  function __construct($id = null,$with_defaults=1) {
@@ -108,6 +110,50 @@ class photo extends frog_object {
    }
   }
  }
+
+ function get_exif($force = false) {
+  $ff = $this->full_file_name();
+  if (! file_exists($ff)) { return false; }
+  $exif = exif_read_data($this->full_file_name());
+  if (! $exif) { return false; }
+
+  if (isset($exif["GPSLatitude"]) && isset($exif["GPSLongitude"])) {
+   if ($force || ! $this->lat) {
+    $this->lat  = $this->tidy_gps($exif["GPSLatitude"] , $exif['GPSLatitudeRef'] );
+   }
+  }
+  if (isset($exif["GPSLongitude"]) && isset($exif["GPSLongitudeRef"])) {
+   if ($force || ! $this->lng) {
+    $this->lng  = $this->tidy_gps($exif["GPSLongitude"], $exif['GPSLongitudeRef']);
+   }
+  }
+  if (isset($exif["DateTimeOriginal"])) {
+   if ($force || ! $this->date) {
+    $this->date = $exif["DateTimeOriginal"];
+   }
+  }
+
+  return $exif;
+ }
+
+ function tidy_gps($coordinate, $hemisphere) {
+  if (is_string($coordinate)) {
+   $coordinate = array_map("trim", explode(",", $coordinate));
+  }
+  for ($i = 0; $i < 3; $i++) {
+   $part = explode('/', $coordinate[$i]);
+   if (count($part) == 1) {
+    $coordinate[$i] = $part[0];
+   } else if (count($part) == 2) {
+    $coordinate[$i] = floatval($part[0])/floatval($part[1]);
+   } else {
+    $coordinate[$i] = 0;
+   }
+  }
+  list($degrees, $minutes, $seconds) = $coordinate;
+  $sign = ($hemisphere == 'W' || $hemisphere == 'S') ? -1 : 1;
+  return $sign * ($degrees + $minutes/60 + $seconds/3600);
+ } 
 }
 
 ?>
