@@ -1,8 +1,12 @@
 <?php
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once('include/zoo.inc');
 
 $params = get_params();
+
 if ($params->dir) {
  find_photos($params);
  classify_photos_page($params);
@@ -36,18 +40,15 @@ function get_params() {
 function choose_group_page($params) {
  global $zoo;
 
- $dirs0 = scandir($zoo->public_pictures_dir);
+ $q = 'SELECT DISTINCT dir FROM tbl_photos ORDER BY dir';
+ $dirs0 = $zoo->get_all($q);
  $dirs = [''];
- foreach ($dirs0 as $d) {
+
+ foreach ($dirs0 as $d0) {
+  $d = $d0->dir;
   if ($d == '.' || $d == '..') { continue; }
   if (is_dir($zoo->public_pictures_dir . '/' . $d)) {
    $dirs[] = $d;
-  }
-  if (is_dir($zoo->public_pictures_dir . '/' . $d . '/Best')) {
-   $dirs[] = $d . '/Best';
-  }
-  if (is_dir($zoo->public_pictures_dir . '/' . $d . '/Extra')) {
-   $dirs[] = $d . '/Extra';
   }
  }
 
@@ -81,11 +82,8 @@ function find_photos($params) {
  $params->species0 = [];
  $params->species_by_id = [];
  foreach ($params->photos as $x) {
-  $x0 = [$x->id, $x->dir, $x->file_name, $x->ignore];
+  $x0 = [$x->id, $x->dir, $x->file_name, $x->description, $x->ignore];
   $x->load_species();
-  if ($x->species && ! $params->include_classified) {
-   continue;
-  }
   if ($x->ignore && ! $params->include_ignored) {
    continue;
   }
@@ -99,6 +97,9 @@ function find_photos($params) {
     $s->extra->count = 1;
     $params->species_by_id[$s->id] = $s;
    }
+  }
+  if ($x->species && ! $params->include_classified) {
+   continue;
   }
   $params->photos0[] = $x0;
  }
@@ -144,7 +145,7 @@ JS;
  Include: already classified $cbc &nbsp;&nbsp; ignored $cbi
 </form>
 <div id="selected_photo_div">
- <img width="800" src="" id="selected_photo_img"/>
+ <img style="max-width: 800px; max-height: 600px;" src="" id="selected_photo_img"/>
  <div id="selected_photo_info"></div>
 </div>
 <div id="recent_species_div">
