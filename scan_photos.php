@@ -1,5 +1,7 @@
 <?php
 
+set_time_limit(0);
+
 require_once('include/zoo.inc');
 
 $params = get_params();
@@ -29,9 +31,7 @@ function get_params() {
  $params->photos_by_full_name = [];
  foreach($photos as $p) {
   $f = $p->full_file_name();
-  if (file_exists($f)) {
-   $params->photos_by_full_name[$f] = $p;
-  }
+  $params->photos_by_full_name[$f] = $p;
  }
 
  return $params;
@@ -60,13 +60,13 @@ function choose_group_page($params) {
  $H = $zoo->html;
  $N = $zoo->nav;
 
- $N->header('Classify photos');
+ $N->header('Scan photos');
  echo $N->top_menu();
 
  $dir_sel = $H->selector('dir',$dirs,$params->dir,['onchange' => 'document.main_form.submit()']);
 
  echo <<<HTML
-<h1>Classify photos</h1>
+<h1>Scan photos</h1>
 <br/>
 <form name="main_form">
 Choose directory: $dir_sel
@@ -85,11 +85,16 @@ function find_photos($params) {
  $params->new_photos = [];
  $full_dir = $zoo->public_pictures_dir . '/' . $params->dir;
  $photos0 = scandir($full_dir);
+ ob_start();
  foreach ($photos0 as $f) {
   $ff = $full_dir . '/' . $f;
   $e = strtolower(pathinfo($ff, PATHINFO_EXTENSION));
   if (is_file($ff) && ($e == 'jpg' || $e == 'jpeg')) {
-   if (! isset($params->photos_by_full_name[$ff])) {
+   echo "Found new photo: $ff<br/>\n"; ob_flush(); flush();
+   if (isset($params->photos_by_full_name[$ff])) {
+    echo "Already in database<br/>\n"; ob_flush(); flush();
+   } else {
+    echo "Adding<br/>\n"; ob_flush(); flush();
     $p = $zoo->new_object('photo');
     $p->dir = $params->dir;
     $p->file_name = $f;
