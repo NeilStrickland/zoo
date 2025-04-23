@@ -45,10 +45,11 @@ zoo.classifier.init = function() {
   p.id = p0[0];
   p.dir = p0[1];
   p.file_name = p0[2];
-  p.ignore = p0[3];
+  p.description = p0[3];
+  p.ignore = p0[4];
   p.species = [];
   p.species_by_id = {};
-  for (var i = 4; i < p0.length; i++) {
+  for (var i = 5; i < p0.length; i++) {
    ps = this.create_photo_species(p.id, p0[i][1], p0[i][0]);
    p.species.push(ps);
    p.species_by_id[ps.species_id] = ps;
@@ -99,6 +100,9 @@ zoo.classifier.select_photo = function(i) {
  this.selected_photo_info.innerHTML = 
   '' + this.selected_i + '/' + this.num_photos + ': ' +
   this.selected_photo.file_name + ' ';
+ if (this.selected_photo.description) {
+  this.selected_photo_info.innerHTML += ' (' + this.selected_photo.description + ') ';
+ }
  for (var s of this.selected_photo.species) {
   this.selected_photo_info.appendChild(s.button);
  } 
