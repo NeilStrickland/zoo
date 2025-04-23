@@ -73,6 +73,8 @@ class photo extends frog_object {
    $this->species = $zoo->load_where('photo_species',"x.photo_id={$this->id}");
   }
   $this->species_by_species_id = make_index($this->species,'species_id');
+
+  return $this->species;
  }
 
  function add_species($species_id) {
