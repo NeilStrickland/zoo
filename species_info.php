@@ -17,6 +17,17 @@ class species_editor extends frog_object_editor {
   ];
  }
 
+ function load_from_request() {
+  $s = $this->object;
+  $s->fill_from_request('',0,['genus','species','common_name','common_group']);
+  foreach(['family','order','class','phylum','kingdom'] as $x) {
+   $xd = $x . '_display';
+   if (isset($_REQUEST[$xd])) {
+    $s->$x = $_REQUEST[$xd];
+   }
+  }
+ }
+
  function listing_url() {
   return 'species_list.php';
  }
@@ -49,6 +60,13 @@ class species_editor extends frog_object_editor {
   }
   
   echo $H->tabber_end();
+
+  echo <<<HTML
+<script type="text/javascript">
+ init();
+</script>
+HTML;
+
   $this->edit_page_footer();
  }
 
@@ -70,7 +88,13 @@ class species_editor extends frog_object_editor {
   echo $H->row('Phylum',$H->phylum_selector('phylum',$s->phylum));
   echo $H->row('Kingdom',$H->kingdom_selector('kingdom',$s->kingdom));
   echo $H->edged_table_end();
-  echo $H->tab_end();
+
+  echo <<<HTML
+<button id="search_button">Search</button>
+
+HTML;
+
+echo $H->tab_end();
  }
 
  function images_tab() {
