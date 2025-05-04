@@ -562,7 +562,8 @@ autosuggest.known_types = {
     'phylum' : 1,
     'class' : 1,
     'order' : 1,
-    'family' : 1
+    'family' : 1,
+    'location' : 1
 };
 
 autosuggest.default_size = {
@@ -572,7 +573,8 @@ autosuggest.default_size = {
     'phylum' : 30,
     'class' : 30,
     'order' : 30,
-    'family' : 30
+    'family' : 30,
+    'location' : 65
 };
 
 autosuggest.extra_params = {
