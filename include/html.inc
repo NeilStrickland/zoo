@@ -44,7 +44,11 @@ class zoo_html extends frog_html {
     $p = $this->frog->load('taxon',$id);
    }
    if ($p) {
-    $v = $p->name . ' (' . $p->rank . ')';
+    $v = $p->name . ' (' . $p->trank . ')';
+   }
+  } else if (is_array($opts)) {
+   if (isset($opts['taxon']) && isset($opts['rank'])) {
+    $v = $opts['taxon'] . ' (' . $opts['rank'] . ')';
    }
   }
   return $this->ajax_selector('taxon',$field_name,$id,$v,$opts);
@@ -73,4 +77,9 @@ class zoo_html extends frog_html {
  function family_selector($field_name,$name='',$opts=null) {
   return $this->ranked_taxon_selector($field_name,$name,'family',$opts);
  }
+
+ function location_selector($field_name,$location='',$opts=null) {
+  return $this->ajax_selector('location',$field_name,$location,$location,$opts);
+ }
+
 }
