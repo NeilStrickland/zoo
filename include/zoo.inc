@@ -36,6 +36,7 @@ $zoo->register('quiz_group');
 $zoo->register('quiz_group_membership');
 $zoo->register('taxon','taxa');
 $zoo->register('photo');
+$zoo->register('photo_dir');
 $zoo->register('photo_species','photo_species');
 
 $zoo->load_table('data_source');
