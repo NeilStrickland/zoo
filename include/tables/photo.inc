@@ -6,6 +6,7 @@ $zoo->add_table(
  'photo','photos',		
  array(		
   'id' => array('type' => 'integer','notnull' => 'true'),
+  'camera' => array('type' => 'text'),
   'dir' => array('type' => 'text'),
   'file_name' => array('type' => 'text'),
   'date' => array('type' => 'text'),
@@ -20,6 +21,7 @@ $zoo->add_table(
  <<<SQL
 SELECT
  x.id,
+ x.camera,
  x.dir,
  x.file_name,
  x.date,
@@ -35,8 +37,8 @@ SQL
 );
 
 class photo extends frog_object {
- public $id,$dir,$file_name,$date,$location,$lat,$lng,$description,$ignore,
-  $species,$species_by_species_id;
+ public $id,$camera,$dir,$file_name,$date,$location,$lat,$lng,$description,$ignore,
+  $species,$species_by_species_id,$exif;
 
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -117,6 +119,7 @@ class photo extends frog_object {
   $ff = $this->full_file_name();
   if (! file_exists($ff)) { return false; }
   $exif = exif_read_data($this->full_file_name());
+  $this->exif = $exif;
   if (! $exif) { return false; }
 
   if (isset($exif["GPSLatitude"]) && isset($exif["GPSLongitude"])) {
@@ -133,6 +136,18 @@ class photo extends frog_object {
    if ($force || ! $this->date) {
     $this->date = $exif["DateTimeOriginal"];
    }
+  }
+
+  $make = isset($exif["Make"]) ? $exif["Make"] : '';
+  $model = isset($exif["Model"]) ? $exif["Model"] : '';
+  if (strlen($model) >= strlen($make) && substr($model,0,strlen($make)) == $make) {
+   $camera = $model;
+  } else {
+   $camera = $make . ' ' . $model;
+  }
+
+  if ($force || ! $this->camera) {
+   $this->camera = $camera;
   }
 
   return $exif;
