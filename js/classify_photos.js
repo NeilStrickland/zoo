@@ -9,21 +9,61 @@ zoo.species.create_dom = function() {
 };
 
 zoo.classifier = {};
+zoo.classifier.location = {};
+
+zoo.classifier.add_location = function(name) {
+ var o = Object.create(zoo.classifier.location);
+ o.name = name;
+ o.button = document.createElement('button');
+ o.button.className = 'location_button';
+ o.button.innerHTML = name;
+ o.button.addEventListener('click', function() {
+  zoo.classifier.selected_photo_location.value = name;
+  zoo.classifier.update_photo();
+ }, false);
+ this.locations.push(o);
+ this.locations_by_name[name] = o;
+ this.locations_span.appendChild(o.button);
+ return o;
+}
 
 zoo.classifier.init = function() {
- this.selected_photo_div = document.getElementById('selected_photo_div');
- this.selected_photo_img = document.getElementById('selected_photo_img');
- this.selected_photo_info = document.getElementById('selected_photo_info');
- this.recent_species_div = document.getElementById('recent_species_div');
- this.species_selector = document.getElementById('species_selector');
+ this.selected_photo_div         = document.getElementById('selected_photo_div');
+ this.selected_photo_img         = document.getElementById('selected_photo_img');
+ this.selected_photo_number      = document.getElementById('selected_photo_number');
+ this.selected_photo_camera      = document.getElementById('selected_photo_camera');
+ this.selected_photo_file_name   = document.getElementById('selected_photo_file_name');
+ this.selected_photo_dir         = document.getElementById('selected_photo_dir');
+ this.selected_photo_date        = document.getElementById('selected_photo_date');
+ this.selected_photo_description = document.getElementById('selected_photo_description');
+ this.selected_photo_location    = document.getElementById('selected_photo_location');
+ this.locations_span             = document.getElementById('locations_span');
+ this.selected_photo_map_link    = document.getElementById('selected_photo_map_link');
+ this.selected_photo_ignore      = document.getElementById('selected_photo_ignore');
+ this.selected_photo_species     = document.getElementById('selected_photo_species');
+ this.recent_species_div         = document.getElementById('recent_species_div');
+ this.species_selector           = document.getElementById('species_selector');
 
- this.selected_photo_info.style.height = '20px';
+ this.selected_photo_description.addEventListener('change', function() {
+  zoo.classifier.update_photo();
+ }, false);
+
+ this.selected_photo_location.addEventListener('change', function() {
+  zoo.classifier.update_photo();
+ }, false);
+
+ this.selected_photo_ignore.addEventListener('change', function() {
+  zoo.classifier.update_photo();
+ }, false);
 
  this.max_recent_species = 10;
 
  this.photos = [];
  this.species_by_id = {};
  this.recent_species = [];
+ this.locations = [];
+ this.locations_by_name = {};
+
  var i = 0;
  for (var s0 of species0) {
   s = Object.create(zoo.species);
@@ -43,33 +83,32 @@ zoo.classifier.init = function() {
  for(var p0 of photos0) {
   p = Object.create(zoo.photo);
   p.id = p0[0];
-  p.dir = p0[1];
-  p.file_name = p0[2];
-  p.description = p0[3];
-  p.ignore = p0[4];
+  p.camera = p0[1];
+  p.dir = p0[2];
+  p.file_name = p0[3];
+  p.date = p0[4];
+  p.location = p0[5];
+  p.lat = p0[6];
+  p.lng = p0[7];
+  p.description = p0[8];
+  p.ignore = p0[9];
   p.species = [];
   p.species_by_id = {};
-  for (var i = 5; i < p0.length; i++) {
+  for (var i = 10; i < p0.length; i++) {
    ps = this.create_photo_species(p.id, p0[i][1], p0[i][0]);
    p.species.push(ps);
    p.species_by_id[ps.species_id] = ps;
   }
-  p.ignore_box = document.createElement('input');
-  p.ignore_box.type = 'checkbox';
-  p.ignore_box.checked = p.ignore;
-  (function(p0) {
-   p0.ignore_box.addEventListener('click', function() {
-    p0.ignore = p0.ignore_box.checked;
-    p0.save();
-   }, false);
-  })(p);
   this.photos.push(p);
  } 
  this.num_photos = this.photos.length;
 
+ for (var l of locations) {
+  this.add_location(l);
+ }
+
  this.selected_i = 0;
  this.selected_photo = null;
-
 
  document.body.addEventListener('keydown', function(e) {
   if (e.key == "ArrowLeft") {
@@ -95,19 +134,27 @@ zoo.classifier.init = function() {
 
 zoo.classifier.select_photo = function(i) {
  this.selected_i = i;
- this.selected_photo = this.photos[i];
- this.selected_photo_img.src = this.selected_photo.url();
- this.selected_photo_info.innerHTML = 
-  '' + this.selected_i + '/' + this.num_photos + ': ' +
-  this.selected_photo.file_name + ' ';
- if (this.selected_photo.description) {
-  this.selected_photo_info.innerHTML += ' (' + this.selected_photo.description + ') ';
+ var p = this.photos[i];
+ this.selected_photo = p;
+ this.selected_photo_img.src = p.url();
+ this.selected_photo_number.innerHTML = '' + this.selected_i + '/' + this.num_photos;
+ this.selected_photo_camera.innerHTML = p.camera;
+ this.selected_photo_file_name.innerHTML = p.file_name;
+ this.selected_photo_dir.innerHTML = p.dir;
+ this.selected_photo_date.innerHTML = p.date;
+ this.selected_photo_description.value = this.selected_photo.description;
+ this.selected_photo_location.value = this.selected_photo.location;
+ if (p.lat && p.lng) {
+  this.selected_photo_map_link.href = 'https://www.google.com/maps/place/' + p.lat + ',' + p.lng;
+  this.selected_photo_map_link.style.display = 'inline';
+ } else {
+  this.selected_photo_map_link.style.display = 'none';
  }
+ this.selected_photo_ignore.checked = p.ignore;
+ this.selected_photo_species.innerHTML = '';
  for (var s of this.selected_photo.species) {
-  this.selected_photo_info.appendChild(s.button);
+  this.selected_photo_species.appendChild(s.button);
  } 
- this.selected_photo_info.appendChild(document.createTextNode(' Ignore:'));
- this.selected_photo_info.appendChild(this.selected_photo.ignore_box);
 }
 
 zoo.classifier.select_next = function() {
@@ -122,11 +169,17 @@ zoo.classifier.select_previous = function() {
  }
 }
 
-zoo.classifier.toggle_ignore = function() {
+zoo.classifier.update_photo = function() {
  if (this.selected_photo) {
-  this.selected_photo.ignore = ! this.selected_photo.ignore;
-  this.selected_photo.ignore_box.checked = this.selected_photo.ignore;
+  this.selected_photo.description = this.selected_photo_description.value;
+  this.selected_photo.location = this.selected_photo_location.value;
+  this.selected_photo.ignore = this.selected_photo_ignore.checked;
   this.selected_photo.save();
+
+  var l = this.selected_photo_location.value;
+  if (l && ! (l in this.locations_by_name)) {
+   this.add_location(l);
+  }
  }
 }
 
@@ -181,6 +234,9 @@ zoo.classifier.create_photo_species = function(photo_id,species_id,ps_id) {
  ps.button = document.createElement('button');
  ps.button.className = 'species_button';
  ps.button.innerHTML = ps.species.genus + ' ' + ps.species.species;
+ ps.button.addEventListener('click', function() {
+  zoo.classifier.remove_photo_species(ps);
+ }, false);
  return ps;
 }
 
@@ -197,5 +253,21 @@ zoo.classifier.add_photo_species = function(species_id) {
  var ps = this.create_photo_species(p.id, species_id, null);
  p.species.push(ps);
  p.species_by_id[ps.species_id] = ps;
- this.selected_photo_info.appendChild(ps.button);
+ this.selected_photo_species.appendChild(ps.button);
+}
+
+zoo.classifier.remove_photo_species = function(ps) {
+ var p = this.selected_photo;
+ if (! p) { return; }
+ if (ps.species_id in p.species_by_id) {
+  delete p.species_by_id[ps.species_id];
+  for (var i = 0; i < p.species.length; i++) {
+   if (p.species[i].species_id == ps.species_id) {
+    p.species.splice(i, 1);
+    break;
+   }
+  }
+  this.selected_photo_species.removeChild(ps.button);
+  ps.delete();
+ }
 }

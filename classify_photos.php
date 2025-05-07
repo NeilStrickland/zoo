@@ -81,8 +81,14 @@ function find_photos($params) {
  $params->photos0 = [];
  $params->species0 = [];
  $params->species_by_id = [];
+
+ $locations = [];
+
  foreach ($params->photos as $x) {
-  $x0 = [$x->id, $x->dir, $x->file_name, $x->description, $x->ignore];
+  if ($x->location) {
+   $locations[$x->location] = 1;
+  }
+  $x0 = [$x->id, $x->camera, $x->dir, $x->file_name, $x->date, $x->location, $x->lat, $x->lng, $x->description, $x->ignore];
   $x->load_species();
   if ($x->ignore && ! $params->include_ignored) {
    continue;
@@ -107,6 +113,12 @@ function find_photos($params) {
  foreach($params->species_by_id as $s) {
   $params->species0[] = [$s->id,$s->genus,$s->species,$s->common_name];
  }
+
+ ksort($locations);
+ $params->locations = [];
+ foreach($locations as $l => $x) {
+  $params->locations[] = $l;
+ }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -119,10 +131,12 @@ function classify_photos_page($params) {
 
  $photos0 = json_encode($params->photos0);
  $species0 = json_encode($params->species0);
+ $locations = json_encode($params->locations);
 
- $script = <<<JS
+$script = <<<JS
 var photos0 = $photos0;
 var species0 = $species0;
+var locations = $locations;
 
 JS;
 
@@ -144,14 +158,54 @@ JS;
  <input type="hidden" name="dir" value="{$params->dir}"/>
  Include: already classified $cbc &nbsp;&nbsp; ignored $cbi
 </form>
+<br/>
 <div id="selected_photo_div">
  <img style="max-width: 800px; max-height: 600px;" src="" id="selected_photo_img"/>
- <div id="selected_photo_info"></div>
+ <div>
+  <table class="edged" style="width:800px;">
+   <tr>
+    <td>Number:</td>  
+    <td id="selected_photo_number"></td>
+    <td>Ignore:</td>  
+    <td><input type="checkbox" id="selected_photo_ignore"/></td>
+   </tr>
+   <tr>
+    <td>File:</td>  
+    <td id="selected_photo_file_name"></td>
+    <td>Directory:</td>  
+    <td id="selected_photo_dir"></td>
+   </tr>
+   <tr>
+    <td>Date:</td>  
+    <td id="selected_photo_date"></td>
+    <td>Camera:</td>  
+    <td id="selected_photo_camera"></td>
+   </tr>
+   <tr>
+    <td>Description:</td>  
+    <td colspan="3"><input type="text" size="60" id="selected_photo_description"/></td>
+   </tr>
+   <tr>
+    <td>Location:</td>  
+    <td colspan="3">
+     <input type="text" size="60" id="selected_photo_location"/>&nbsp;&nbsp;
+     <a id="selected_photo_map_link" href="" style="display:none" target="_blank">Map</a><br/>
+     <span id="locations_span"></span>
+    </td>
+   </tr>
+   <tr>
+    <td>Species:</td>  
+    <td colspan="3" id="selected_photo_species"></td>
+   </tr>
+  </table>
+ </div>
 </div>
+<br/>
 <div id="recent_species_div">
 </div>
-$ss
-
+<br/>
+$ss  &nbsp;&nbsp;&nbsp; 
+<button onclick="window.open('species_info.php?command=new')">Add a new species</button>
 HTML;
 
  $N->footer(); 
