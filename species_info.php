@@ -177,7 +177,11 @@ HTML;
    if ($x->photo_description) { $t .= ': ' . $x->photo_description; }
    if ($x->photo_location) { $t .= ', ' . $x->photo_location; }
 
-   echo $x->img() . '<br/>' . $t . '<br/><br/>' . PHP_EOL;
+   if ($x->file_exists()) {
+    echo $x->img() . '<br/>' . $t . '<br/><br/>' . PHP_EOL;
+   } else {
+    echo "<b>Missing:</b> $t<br/><br/>\n";
+   }
   }
   echo $H->tab_end();
  }
