@@ -2,11 +2,12 @@
 
 class zoo_class extends frog {
  public
-  $species_index,$all_species,$data_sources,$data_sources_by_code,$data_sources_by_name,
+  $data_sources,$data_sources_by_code,$data_sources_by_name,
   $data_dir,$public_pictures_dir,
   $temp_images_dir,$image_dir,$image_url,$image_url_base,
   $temp_sounds_dir,$sound_dir,$sound_url,$sound_url_base,
-  $global_data_dir,$original_images_dir,$html,$nav;
+  $global_data_dir,$original_images_dir,$html,$nav,
+  $species_index,$all_species,$all_photo_dirs,$available_photo_dirs;
 
  function make_species_index($force = 0) {
 
@@ -402,7 +403,8 @@ class zoo_class extends frog {
   }
  } 
 
- function tabulate_taxa() {
+ function tabulate_taxa($return_errors = false) {
+  $errors = [];
   $taxa = $this->load_all('taxa');
   $taxa_index = [];
   foreach($taxa as $t) {
@@ -438,7 +440,9 @@ class zoo_class extends frog {
    $t->new_parent_id = null;
    if ($t->trank_number() > 0 && ! $t->parent_id) {
     $x = $t->find_parent();
-    if (! $x->error) {
+    if ($x->error) {
+     $errors[] = $x;
+    } else {
      $t->parent_id = $x->parent_id;
      $t->new_parent_id = $x->parent_id;
      $t->save();
@@ -446,7 +450,11 @@ class zoo_class extends frog {
    }
   }
 
-  return $taxa;
+  if ($return_errors) {
+   return $errors;
+  } else {
+   return $taxa;
+  }
  }
 
  function taxa_tree() {
@@ -464,6 +472,67 @@ class zoo_class extends frog {
 
   return $tree;
  }
+
+ function list_photo_dirs() {
+  $q = 'SELECT DISTINCT dir FROM tbl_photos ORDER BY dir';
+  $dirs0 = $this->get_all($q);
+  $this->all_photo_dirs = [];
+  $this->available_photo_dirs = [];
+ 
+  foreach ($dirs0 as $d0) {
+   $d = $d0->dir;
+   if ($d == '.' || $d == '..') { continue; }
+   $this->all_photo_dirs[] = $d;
+   if (is_dir($this->public_pictures_dir . '/' . $d)) {
+    $this->available_photo_dirs[] = $d;
+   }
+  }
+
+  return $this->available_photo_dirs;
+ }
+ 
+ function collate_photo_dirs() {
+  $photos = $this->load_all('photos');
+  $photos_by_id = make_index($photos,'id');
+  $dir_index = [];
+  foreach($photos as $p) {
+   $d = $p->dir;
+   if (! isset($dir_index[$d])) {
+    $dir = new stdClass();
+    $dir->name = $d;
+    $dir->photos = [];
+    $dir->ignored_photos = [];
+    $dir->species_counts = [];
+    $dir->unclassified_count = 0;
+    $dir_index[$d] = $dir;
+   } else {
+    $dir = $dir_index[$d];
+   }
+   if ($p->ignore) {
+    $dir->ignored_photos[] = $p;
+   } else {
+    $dir->photos[] = $p;
+   }
+   $p->species = [];
+  }
+
+  $ss = $this->load_all('photo_species');
+  foreach($ss as $s) {
+   if (isset($photos_by_id[$s->photo_id])) {
+    $p = $photos_by_id[$s->photo_id];
+    $dir = $dir_index[$p->dir];
+    if (! isset($dir->species_counts[$s->species_id])) {
+     $dir->species_counts[$s->species_id] = 1;
+    } else {
+     $dir->species_counts[$s->species_id]++;
+    }
+    if (! isset($p->species[$s->species_id])) {
+     $p->species[$s->species_id] = 1;
+    }
+   }
+  }
+ }
 }
+
 
 ?>
