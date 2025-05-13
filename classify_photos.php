@@ -205,7 +205,7 @@ JS;
 </div>
 <br/>
 $ss  &nbsp;&nbsp;&nbsp; 
-<button onclick="window.open('species_info.php?command=new')">Add a new species</button>
+<button id="create_species_button">Add a new species</button>
 HTML;
 
  $N->footer(); 
