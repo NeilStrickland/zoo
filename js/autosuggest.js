@@ -562,7 +562,8 @@ autosuggest.known_types = {
     'phylum' : 1,
     'class' : 1,
     'order' : 1,
-    'family' : 1
+    'family' : 1,
+    'location' : 1
 };
 
 autosuggest.default_size = {
@@ -572,7 +573,8 @@ autosuggest.default_size = {
     'phylum' : 30,
     'class' : 30,
     'order' : 30,
-    'family' : 30
+    'family' : 30,
+    'location' : 65
 };
 
 autosuggest.extra_params = {
@@ -586,7 +588,8 @@ autosuggest.extra_params = {
 };
 
 autosuggest.setup_all = function() {
-    var i,ip,ips,d,s,url,p,v,size;
+ var i,ip,ips,d,s,url,p,v,size,aa;
+ aa = {};
  ips = document.getElementsByTagName('INPUT');
 
  for (i in ips) {
@@ -618,10 +621,12 @@ autosuggest.setup_all = function() {
     size = this.default_size[s];
     if (size) { d.setAttribute('size',size); }
 
-    this.setup_ajax(ip,d,url);
+    aa[ip.id] = this.setup_ajax(ip,d,url);
    }
   }
  }
+
+ return aa;
 };
 
 if (! window.loaded_scripts) {

@@ -139,3 +139,25 @@ class family_suggester extends ranked_taxon_suggester {
   parent::__construct('family');
  }
 }
+
+class location_suggester extends frog_suggester {
+ function __construct() {
+  global $zoo;
+  $this->frog = $zoo;
+ }
+ 
+ function get_suggestions() {
+  $s = $this->search_term;
+  $n = 10;
+  $q = <<<SQL
+SELECT location as k, location as v FROM 
+(SELECT DISTINCT location FROM tbl_photos WHERE location IS NOT NULL)
+WHERE location LIKE '%$s%'
+ORDER BY location
+LIMIT 0,$n
+
+SQL;
+
+  $n -= $this->add_suggestions($q);
+ }
+}

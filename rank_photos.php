@@ -91,6 +91,7 @@ function choose_species_page($params) {
  } else {
   $species = [];
  }
+ $n = count($species);
 
  $H = $zoo->html;
  $N = $zoo->nav;
@@ -104,6 +105,8 @@ function choose_species_page($params) {
  echo <<<HTML
 <h1>Rank Photos$d</h1>
 <br/>
+$n species
+<br/><br/>
 HTML;
  
  echo $H->edged_table_start();

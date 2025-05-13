@@ -6,6 +6,7 @@ $zoo->add_table(
  'photo','photos',		
  array(		
   'id' => array('type' => 'integer','notnull' => 'true'),
+  'camera' => array('type' => 'text'),
   'dir' => array('type' => 'text'),
   'file_name' => array('type' => 'text'),
   'date' => array('type' => 'text'),
@@ -13,19 +14,22 @@ $zoo->add_table(
   'lat' => array('type' => 'float'),
   'lng' => array('type' => 'float'),
   'description' => array('type' => 'text'),
+  'ignore' => array('type' => 'integer', 'default' => 0),
  ),
  array(
  ),
  <<<SQL
 SELECT
  x.id,
+ x.camera,
  x.dir,
  x.file_name,
  x.date,
  x.location,
  x.lat,
  x.lng,
- x.description
+ x.description,
+ x.ignore
 FROM tbl_photos x
 WHERE %s
  ORDER BY x.date,x.file_name,x.id
@@ -33,8 +37,8 @@ SQL
 );
 
 class photo extends frog_object {
- public $id,$dir,$file_name,$date,$location,$lat,$lng,$description,
-  $species,$species_by_species_id;
+ public $id,$camera,$dir,$file_name,$date,$location,$lat,$lng,$description,$ignore,
+  $species,$species_by_species_id,$exif;
 
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -71,6 +75,8 @@ class photo extends frog_object {
    $this->species = $zoo->load_where('photo_species',"x.photo_id={$this->id}");
   }
   $this->species_by_species_id = make_index($this->species,'species_id');
+
+  return $this->species;
  }
 
  function add_species($species_id) {
@@ -108,6 +114,63 @@ class photo extends frog_object {
    }
   }
  }
+
+ function get_exif($force = false) {
+  $ff = $this->full_file_name();
+  if (! file_exists($ff)) { return false; }
+  $exif = exif_read_data($this->full_file_name());
+  $this->exif = $exif;
+  if (! $exif) { return false; }
+
+  if (isset($exif["GPSLatitude"]) && isset($exif["GPSLongitude"])) {
+   if ($force || ! $this->lat) {
+    $this->lat  = $this->tidy_gps($exif["GPSLatitude"] , $exif['GPSLatitudeRef'] );
+   }
+  }
+  if (isset($exif["GPSLongitude"]) && isset($exif["GPSLongitudeRef"])) {
+   if ($force || ! $this->lng) {
+    $this->lng  = $this->tidy_gps($exif["GPSLongitude"], $exif['GPSLongitudeRef']);
+   }
+  }
+  if (isset($exif["DateTimeOriginal"])) {
+   if ($force || ! $this->date) {
+    $this->date = $exif["DateTimeOriginal"];
+   }
+  }
+
+  $make = isset($exif["Make"]) ? $exif["Make"] : '';
+  $model = isset($exif["Model"]) ? $exif["Model"] : '';
+  if (strlen($model) >= strlen($make) && substr($model,0,strlen($make)) == $make) {
+   $camera = $model;
+  } else {
+   $camera = $make . ' ' . $model;
+  }
+
+  if ($force || ! $this->camera) {
+   $this->camera = $camera;
+  }
+
+  return $exif;
+ }
+
+ function tidy_gps($coordinate, $hemisphere) {
+  if (is_string($coordinate)) {
+   $coordinate = array_map("trim", explode(",", $coordinate));
+  }
+  for ($i = 0; $i < 3; $i++) {
+   $part = explode('/', $coordinate[$i]);
+   if (count($part) == 1) {
+    $coordinate[$i] = $part[0];
+   } else if (count($part) == 2) {
+    $coordinate[$i] = floatval($part[0])/floatval($part[1]);
+   } else {
+    $coordinate[$i] = 0;
+   }
+  }
+  list($degrees, $minutes, $seconds) = $coordinate;
+  $sign = ($hemisphere == 'W' || $hemisphere == 'S') ? -1 : 1;
+  return $sign * ($degrees + $minutes/60 + $seconds/3600);
+ } 
 }
 
 ?>

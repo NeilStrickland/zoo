@@ -10,6 +10,7 @@ $zoo->add_table(
   'species_id' => array('type' => 'integer','link' => 'species')
  ),
  array(
+  'photo_camera' => array('type' => 'text'),
   'photo_dir' => array('type' => 'text'),
   'photo_file_name' => array('type' => 'text'),
   'photo_date' => array('type' => 'text'),
@@ -31,6 +32,7 @@ $zoo->add_table(
 SELECT
  x.id,
  x.photo_id,
+ p.camera AS photo_camera,
  p.dir AS photo_dir,
  p.file_name AS photo_file_name,
  p.date AS photo_date,
@@ -52,13 +54,14 @@ FROM tbl_photo_species x
  LEFT JOIN tbl_photos p ON x.photo_id = p.id
   LEFT JOIN tbl_species s ON x.species_id = s.id
 WHERE %s
- ORDER BY p.date,p.file_name,p.id,x.id
+ ORDER BY s.genus,s.species,p.date,p.file_name,p.id,x.id
 SQL
 );
 
 class photo_species extends frog_object {
  public $id,$object,
-  $photo_id,$photo_dir,$photo_file_name,$photo_date,$photo_location,$photo_lat,$photo_lng,$photo_description,
+  $photo_id,$photo_camera,$photo_dir,$photo_file_name,$photo_date,
+  $photo_location,$photo_lat,$photo_lng,$photo_description,
   $species_id,$class,$order,$family,$genus,$species,$binomial,$common_name,$common_group,
   $quality;
   

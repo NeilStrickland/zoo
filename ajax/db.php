@@ -96,7 +96,8 @@ $eh = set_error_handler("ignore_errors");
 if ($command == 'load') {
  $obj->$key = $val;
  if (! $obj->load()) { $obj->error = 1; } 
- echo json_encode($obj);
+ $j = json_encode($obj->strip_parent());
+ echo $j;
 } elseif ($command == 'delete') {
  $obj->$key = $val;
  if ($obj->load()) {

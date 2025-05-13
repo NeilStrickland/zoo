@@ -86,6 +86,8 @@ class taxon extends frog_object {
 
   $r = $this->trank_number();
   $x = new stdClass();
+  $x->name = $this->name;
+  $x->trank = $this->trank;
   $x->parent_name = null;
   $x->parent_id = null;
   $x->parent = null;
