@@ -13,6 +13,9 @@ HTML;
 
 for($i = 0; $i < $n; $i++) {
  $x = $images[$i];
+ if ($x->width && $x->height) {
+  continue;
+ }
  $x->set_size(1);
  $img = $x->tiny_img();
  $ar = $x->aspect_ratio();
