@@ -51,6 +51,10 @@ class photo extends frog_object {
   return $zoo->public_pictures_dir . '/' . $this->dir . '/' . $this->file_name;
  }
  
+ function file_exists() {
+  return file_exists($this->full_file_name());
+ }
+ 
  function url() {
   return "/zoo/send/send_photo.php?id={$this->id}";
  }

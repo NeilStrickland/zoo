@@ -95,7 +95,13 @@ function find_photos($params) {
 SQL;
  }
 
- $params->photos = $zoo->load_where('photo',$w);
+ $photos = $zoo->load_where('photo',$w);
+ $params->photos = [];
+ foreach($photos as $p) {
+  if ($p->file_exists()) {
+   $params->photos[] = $p;
+  }
+ }
  $n = count($params->photos);
  $params->unclassified = [];
  $params->species_by_id = [];
