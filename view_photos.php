@@ -90,7 +90,7 @@ function find_photos($params) {
     SELECT ps.id FROM tbl_photo_species ps 
      LEFT JOIN tbl_species s ON ps.species_id=s.id 
      WHERE ps.photo_id=x.id 
-     AND s.{$params->trank}='{$params->taxon}'
+     AND s.`{$params->trank}`='{$params->taxon}'
    )
 SQL;
  }
