@@ -28,12 +28,25 @@ $taxa = [$genus, $family, $order, $class, $phylum, $kingdom];
 
 for($i = 1; $i < 6; $i++) {
  $trank = $tranks[$i];
+ $chain->$trank = null;
+}
+
+for($i = 1; $i < 6; $i++) {
+ $trank = $tranks[$i];
  $srank = $tranks[$i-1];
  if ($taxa[$i]) {
   $chain->$trank = $taxa[$i];
  } else if ($chain->$srank && isset($taxa_index[$srank][$chain->$srank])) {
   $chain->$trank = $taxa_index[$srank][$chain->$srank]->parent_name;
  }
+}
+
+if ($chain->class === null && 
+    $chain->phylum === null &&
+    $chain->kingdom === null &&
+    strlen($chain->order) >= 4 &&
+    substr($chain->order, -4) === 'ales') {
+ $chain->kingdom = 'Plantae';
 }
 
 echo json_encode($chain);
