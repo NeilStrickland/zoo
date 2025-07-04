@@ -90,7 +90,8 @@ HTML;
   echo $H->edged_table_end();
 
   echo <<<HTML
-<button id="search_button">Search</button>
+<button type="button" id="search_button">Search</button>&nbsp;&nbsp;
+<button type="button" id="fill_button">Fill</button>
 
 HTML;
 

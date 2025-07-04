@@ -8,6 +8,7 @@ init = function() {
  var phylum_input_display = document.main_form.phylum_display;
  var kingdom_input_display = document.main_form.kingdom_display;
  var search_button = document.getElementById('search_button');
+ var fill_button = document.getElementById('fill_button');
 
  var fill_taxa = function() {
   var u = 'ajax/fill_taxa.php?' + 
@@ -83,4 +84,10 @@ init = function() {
    window.location.href = "/species/" + x.replace(/ /g, "_") + ".html";
   }
  }, false);
+
+ fill_button.addEventListener('click', function() {
+  fill_taxa();
+ }, false);
+
+ fill_taxa();
 }
