@@ -16,7 +16,8 @@ if (! $zoo->global_data_dir) {
 
 $zoo->public_pictures_dir = getenv('PUBLICPICTURES');
 
-$zoo->data_dir = $zoo->global_data_dir . "/zoo";
+// $zoo->data_dir = $zoo->global_data_dir . "/zoo";
+$zoo->data_dir = realpath($zoo->include_dir . '/../data');
 $zoo->db_type = 'sqlite';
 $zoo->db_file = $zoo->data_dir . '/nps_zoo.db';
 $zoo->connect();
