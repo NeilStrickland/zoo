@@ -19,7 +19,7 @@ function get_params() {
   $t = $zoo->load('taxon',$params->taxon_id);
   $params->taxon = $t;
   if ($t) {
-   $w = "x.{$t->trank}='{$t->name}'";
+   $w = "x.`{$t->trank}`='{$t->name}'";
    $params->species = $zoo->load_where('species',$w);
   } else {
    $params->species = [];
