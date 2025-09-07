@@ -563,7 +563,8 @@ autosuggest.known_types = {
     'class' : 1,
     'order' : 1,
     'family' : 1,
-    'location' : 1
+    'location' : 1,
+    'quiz_group' : 1
 };
 
 autosuggest.default_size = {
@@ -574,7 +575,8 @@ autosuggest.default_size = {
     'class' : 30,
     'order' : 30,
     'family' : 30,
-    'location' : 65
+    'location' : 65,
+    'quiz_group' : 65
 };
 
 autosuggest.extra_params = {
