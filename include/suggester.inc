@@ -161,3 +161,34 @@ SQL;
   $n -= $this->add_suggestions($q);
  }
 }
+
+class quiz_group_suggester extends frog_suggester {
+ function __construct() {
+  global $zoo;
+  $this->frog = $zoo;
+  $this->type = 'quiz_group';
+  $this->table_name = 'tbl_quiz_groups x';
+  $this->descriptor_query = <<<SQL
+SELECT x.name 
+FROM tbl_quiz_groups x WHERE x.id = %s LIMIT 0,1
+SQL
+; }
+ 
+ function get_suggestions() {
+  $s = $this->search_term;
+  $n = 10;
+  $q = <<<SQL
+SELECT
+ x.id AS k,
+ x.name AS v
+FROM {$this->table_name}
+WHERE x.name LIKE '%$s%'
+ORDER BY x.name
+LIMIT 0,$n
+
+SQL;
+
+  $n -= $this->add_suggestions($q);
+ }
+}
+
