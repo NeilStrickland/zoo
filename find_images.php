@@ -144,15 +144,16 @@ HTML;
   urlencode($species->genus . '_' . $species->species);
 
  $bnb_url = "https://www.bing.com/images/search?q=" .
-  "{$species->genus}+{$species->species}" .
+  urlencode($species->genus . ' ' . $species->species);
   "&qft=+filterui:license-L2_L3_L4_L5_L6_L7&FORM=IRFLTR";
 
  $bnc_url = "https://www.bing.com/images/search?q=" .
-  "{$species->common_name}" .
+  urlencode($species->common_name) .
   "&qft=+filterui:license-L2_L3_L4_L5_L6_L7&FORM=IRFLTR";
 
- $fbs_url = "https://www.fishbase.de/photos/thumbnailssummary.php?Genus=" .
-         $species->genus . "&Species=" . $species->species;
+ $fbs_url = "https://www.fishbase.de/photos/ThumbnailsSummary.php" . 
+         "?Genus=" . urlencode($species->genus) . 
+         "&Species=" . urlencode($species->species);
  
  echo <<<HTML
  <div class="tabber" id="web_images_tabber">
@@ -181,7 +182,7 @@ HTML;
    <iframe id="eol_iframe" style="width:100%; height:100%"></iframe>
   </div>
  </div>
-<script type="text/javascript" src="/js/tabber/tabber.js"></script>
+<script type="text/javascript" src="js/tabber.js"></script>
 <script type="text/javascript">
 document.getElementById('wmc_iframe').src='$wmc_url';
 document.getElementById('wmb_iframe').src='$wmb_url';
