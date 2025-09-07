@@ -159,7 +159,7 @@ JS;
  Include: already classified $cbc &nbsp;&nbsp; ignored $cbi
 </form>
 <br/>
-<div id="selected_photo_div">
+<div id="selected_photo_div" style="display: flex">
  <img style="max-width: 800px; max-height: 600px;" src="" id="selected_photo_img"/>
  <div>
   <table class="edged" style="width:800px;">
@@ -198,14 +198,14 @@ JS;
     <td colspan="3" id="selected_photo_species"></td>
    </tr>
   </table>
+  <br/>
+  <div id="recent_species_div">
+  </div>
+  <br/>
+  $ss  &nbsp;&nbsp;&nbsp; 
+  <button id="create_species_button">Add a new species</button>
  </div>
 </div>
-<br/>
-<div id="recent_species_div">
-</div>
-<br/>
-$ss  &nbsp;&nbsp;&nbsp; 
-<button id="create_species_button">Add a new species</button>
 HTML;
 
  $N->footer(); 
