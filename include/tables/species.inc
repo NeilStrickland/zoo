@@ -14,7 +14,8 @@ $zoo->add_table(
   'genus' => array('type' => 'text'),
   'species' => array('type' => 'text'),
   'common_name' => array('type' => 'text'),
-  'common_group' => array('type' => 'text')
+  'common_group' => array('type' => 'text'),
+  'genus_id' => array('type' => 'integer')
  ),
  array(
   'binomial' => array('type' => 'text')
@@ -31,7 +32,8 @@ SELECT
  x.species,
  (x.genus || ' ' || x.species) AS binomial,
  x.common_name,
- x.common_group
+ x.common_group,
+ x.genus_id
 FROM tbl_species x
 WHERE %s
  ORDER BY x.genus,x.species,x.id
@@ -40,7 +42,7 @@ SQL
 
 class species extends frog_object {
  public $id,$object,$kingdom,$phylum,$class,$order,$family,$genus,$species,
-  $binomial,$common_name,$common_group,$images,$sounds,$quiz_groups,
+  $binomial,$common_name,$common_group,$genus_id,$images,$sounds,$quiz_groups,
   $data_records,$data_records_by_source,$data_records_by_code,$species_id,
   $external_id,$photos;
   
@@ -87,7 +89,7 @@ class species extends frog_object {
   if ($this->id) {
    $this->images = $zoo->load_where('images',"species_id={$this->id}");
   } else {
-   $this->images = [];   
+   $this->images = [];
   } 
   return $this->images;
  }

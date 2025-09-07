@@ -87,6 +87,7 @@ HTML;
   echo $H->row('Class',$H->class_selector('class',$s->class));
   echo $H->row('Phylum',$H->phylum_selector('phylum',$s->phylum));
   echo $H->row('Kingdom',$H->kingdom_selector('kingdom',$s->kingdom));
+  echo $H->row('Genus ID',$H->text_input('genus_id',$s->genus_id));
   echo $H->edged_table_end();
 
   echo <<<HTML
