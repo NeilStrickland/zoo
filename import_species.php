@@ -22,6 +22,17 @@ function get_params() {
  global $zoo;
  $params = new stdClass();
  $params->col_types = ['','genus','species','binomial','common_name','external_id','family','order','class','phylum','kingdom'];
+ $params->col_type_index = [
+  'taxon_name' => 'binomial',
+  'common name' => 'common_name',
+  'taxon_common_name' => 'common_name',
+  'url' => 'external_id' 
+ ];
+ foreach ($params->col_types as $c) {
+  if ($c) {
+   $params->col_type_index[$c] = $c;
+  }
+ }
 
  $params->command = get_restricted_parameter('command', ['select_file','prepare_import','import'], 'select_file');
  $tree = [];
@@ -34,7 +45,7 @@ function get_params() {
  $params->tree = $tree;
  $params->tranks = $tranks;
  $params->col_type = [];
- for ($i = 0; $i < 10; $i++) {
+ for ($i = 0; $i < 100; $i++) {
   $params->col_type[$i] = get_restricted_parameter('col_type' . $i, $params->col_types, '');
  }
  foreach (['kingdom','phylum','class','order','family'] as $p) {
@@ -58,6 +69,15 @@ function get_params() {
   $params->data_source = $zoo->load('data_sources',$params->data_source_id);
   if (! $params->data_source) {
    $params->data_source_id = 0;
+  }
+ }
+
+ $params->quiz_group_id = (int) get_optional_parameter('quiz_group_id',0);
+ $params->quiz_group = null;
+ if ($params->quiz_group_id) {
+  $params->quiz_group = $zoo->load('quiz_groups',$params->quiz_group_id);
+  if (! $params->quiz_group) {
+   $params->quiz_group_id = 0;
   }
  }
 
@@ -96,14 +116,14 @@ function handle_upload($params) {
   exit;
  }
 
- $f = $zoo->data_dir . '/species.csv';
+ $f = $zoo->data_dir . '/raw/tmp_species.csv';
  move_uploaded_file($_FILES['species_file']['tmp_name'], $f);
 }
 
-function parse_file($params) {
+function read_lines($params) {
  global $zoo;
 
- $f = $zoo->data_dir . '/species.csv';
+ $f = $zoo->data_dir . '/raw/tmp_species.csv';
  $fh = fopen($f,'r');
  if (!$fh) {
   error_page("Could not open file");
@@ -120,58 +140,89 @@ function parse_file($params) {
    $params->lines[] = $x;
   }
  }
- fclose($fh);
+ fclose($fh); 
+
+ $params->has_header = false;
+ $params->header_line = null;
+
+ if ($params->lines) {
+  $first_line = array_map('trim',array_map('strtolower', $params->lines[0]));
+  if ((in_array('genus',$first_line) && in_array('species', $first_line)) || 
+      in_array('binomial',$first_line) || 
+      in_array('taxon_name',$first_line)) {
+   $params->has_header = true;
+   $params->header_line = $first_line;
+   array_pop($params->lines);
+  }
+ }
+}
+
+function parse_file($params) {
+ read_lines($params);
  $params->cols = [];
  $params->col_type = [];
  for ($i = 0; $i < $params->num_cols; $i++) {
   $params->cols[] = [];
   $params->col_type[] = '';
  }
+
+ if ($params->has_header) {
+  for ($i = 0; $i < count($params->header_line); $i++) {
+   $c = $params->header_line[$i];
+   if ($c && isset($params->col_type_index[$c])) {
+    $params->col_type[$i] = $params->col_type_index[$c];
+   }
+  }
+ }
+
  foreach($params->lines as $line) {
   $n = count($line);
   for ($i = 0; $i < $params->num_cols; $i++) {
    $params->cols[$i][] = ($i < $n) ? $line[$i] : '';
   }
  }
- $votes = [];
- for ($i = 0; $i < $params->num_cols; $i++) {
-  $votes[$i] = [];
-  foreach($params->col_types as $t) {
-   $votes[$i][$t] = 0;
-  }
 
-  foreach($params->cols[$i] as $c) {
-   if (! $c) {
-    continue;
+ if (! $params->has_header) {
+  $votes = [];
+  for ($i = 0; $i < $params->num_cols; $i++) {
+   $votes[$i] = [];
+   foreach($params->col_types as $t) {
+    $votes[$i][$t] = 0;
    }
-   $n = count(explode(' ',$c));
-   if (preg_match('/^[A-Z][-a-z]+ [-a-z]+$/',$c)) {
-    $votes[$i]['binomial']++;
-   } else if (preg_match('/^[-A-Za-z ]+$/',$c) && $n > 2) {
-    $votes[$i]['common_name']++;
-   } else if (preg_match('/^[-A-Z0-9]+$/',$c)) {
-    $votes[$i]['external_id']++;
-   } else if (isset($params->tranks[$c])) {
-    $votes[$i][$params->tranks[$c]]++;
-   } else if (preg_match('/^[A-Z][-a-z]+$/',$c)) {
-    $votes[$i]['genus']++;
-   } else if (preg_match('/^[-a-z]+$/',$c)) {
-    $votes[$i]['species']++;
-   }
-  }
 
-  $top_voted = '';
-  $top_vote = 0;
-  $num_votes = 0;
-  foreach($votes[$i] as $t => $v) {
-   $num_votes += $v;
-   if ($v > $top_vote) {
-    $top_vote = $v;
-    $top_voted = $t;
+   foreach($params->cols[$i] as $c) {
+    if (! $c) {
+     continue;
+    }
+    $n = count(explode(' ',$c));
+    if (preg_match('/^[A-Z][-a-z]+ [-a-z]+$/',$c)) {
+     $votes[$i]['binomial']++;
+    } else if (preg_match('/^[-A-Za-z ]+$/',$c) && $n > 2) {
+     $votes[$i]['common_name']++;
+    } else if (preg_match('/^[-A-Z0-9]+$/',$c)) {
+     $votes[$i]['external_id']++;
+    } else if (isset($params->tranks[$c])) {
+     $votes[$i][$params->tranks[$c]]++;
+    } else if (preg_match('/^[A-Z][-a-z]+$/',$c)) {
+     $votes[$i]['genus']++;
+    } else if (preg_match('/^[-a-z]+$/',$c)) {
+     $votes[$i]['species']++;
+    }
    }
-  }
-  if ($top_vote > 0.8 * $num_votes) {
-   $params->col_type[$i] = $top_voted;
+
+   $top_voted = '';
+   $top_vote = 0;
+   $num_votes = 0;
+   foreach($votes[$i] as $t => $v) {
+    $num_votes += $v;
+    if ($v > $top_vote) {
+     $top_vote = $v;
+     $top_voted = $t;
+    }
+   }
+   if ($top_vote > 0.8 * $num_votes) {
+    $params->col_type[$i] = $top_voted;
+   }
   }
  }
 }
@@ -209,6 +260,7 @@ HTML;
  echo $H->row($H->bold('Order:'), $H->taxon_selector('order_id'));
  echo $H->row($H->bold('Family:'), $H->taxon_selector('family_id'));
  echo $H->row($H->bold('Data source:'), $H->data_source_selector('data_source_id'));
+ echo $H->row($H->bold('Quiz:'), $H->quiz_group_selector('quiz_group_id'));
 
  for ($i = 0; $i < $n; $i++) {
   echo $H->row($H->bold('Column ' . $i . ':'), $H->selector('col_type' . $i, $params->col_types, $params->col_type[$i]));
@@ -226,16 +278,11 @@ HTML;
 function do_import($params) {
  global $zoo;
 
- $f = $zoo->data_dir . '/species.csv';
- $fh = fopen($f,'r');
- if (!$fh) {
-  error_page("Could not open file");
-  exit;
- }
+ read_lines($params);
  $params->old_species = [];
  $params->new_species = [];
  $params->new_records = [];
- while ($x = fgetcsv($fh)) {
+ foreach ($params->lines as $x) {
   if (! $x) {
    continue;
   }
@@ -252,49 +299,59 @@ function do_import($params) {
     $s->$t = $v;
    } else if ($t == 'binomial') {
     $a = explode(' ',$v);
-    $s->genus = $a[0];
-    $s->species = $a[1];
-   }
-  }
-  if ($params->data_source && $s->external_id) {
-   $s->data_record = $zoo->new_object('data_record');
-   $s->data_source_id = $params->data_source->id;
-   $s->data_record->external_id = $s->external_id;
-  }
-
-  $s->old = null;
-  if ($s->genus && $s->species) {
-   $ss = $zoo->load_where('species',"x.genus = '$s->genus' AND x.species = '$s->species'");
-   if ($ss) {
-    $s->old = $ss[0];
-    $s->old->data_record = null;
-   }
-
-   if ($params->data_source_id && $s->old) {
-    $rr = $zoo->load_where('data_records',"x.data_source_id = $params->data_source_id AND x.species_id = '{$s->old->id}'");
-    if ($rr) {
-     $s->old->data_record = $rr[0];
+    if (count($a) >= 2) {
+     $s->genus = $a[0];
+     $s->species = $a[1];
     }
    }
   }
 
-  if ($s->old) {
+  if (! ($s->genus && $s->species)) { 
+   continue;
+  }
+  if ($params->data_source && $s->external_id) {
+   $s->extra->data_record = $zoo->new_object('data_record');
+   $s->data_source_id = $params->data_source->id;
+   $s->extra->data_record->external_id = $s->external_id;
+  }
+
+  $s->extra->old = null;
+  if ($s->genus && $s->species) {
+   $ss = $zoo->load_where('species',"x.genus = '$s->genus' AND x.species = '$s->species'");
+   if ($ss) {
+    $s->extra->old = $ss[0];
+    $s->extra->old->extra->data_record = null;
+    $s->id = $s->extra->old->id;
+   }
+
+   if ($params->data_source_id && $s->extra->old) {
+    $rr = $zoo->load_where('data_records',"x.data_source_id = $params->data_source_id AND x.species_id = '{$s->extra->old->id}'");
+    if ($rr) {
+     $s->extra->old->extra->data_record = $rr[0];
+    }
+   }
+  }
+
+  if ($s->extra->old) {
    $params->old_species[] = $s;
-   if ($params->data_source && $s->data_record && ! $s->old->data_record) {
-    $s->data_record->species_id = $s->old->id;
-    $s->data_record->save();
+   if ($params->data_source && $s->extra->data_record && ! $s->extra->old->extra->data_record) {
+    $s->extra->data_record->species_id = $s->extra->old->id;
+    $s->extra->data_record->save();
     $params->new_records[] = $s;
    }
   } else {
    $s->save();
    if ($params->data_source && $s->external_id) {
-    $s->data_record->species_id = $s->id;
-    $s->data_record->save();
+    $s->extra->data_record->species_id = $s->id;
+    $s->extra->data_record->save();
    }
    $params->new_species[] = $s;
   }
+
+  if ($params->quiz_group && $s->id) {
+   $params->quiz_group->add_member($s->id);
+  }
  }
- fclose($fh);
 }
 
 function report_page($params) {
