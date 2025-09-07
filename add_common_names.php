@@ -36,9 +36,9 @@ echo <<<HTML
   <title>Common names</title>
   <link rel="stylesheet" href="css/tabber.css" TYPE="text/css" MEDIA="screen"/>
   <link rel="stylesheet" href="css/zoo.css" TYPE="text/css"/>
-  <script type="text/javascript" src="frog.js"></script>
-  <script type="text/javascript" src="objects_auto.js"></script>
-  <script type="text/javascript" src="zoo.js"></script>
+  <script type="text/javascript" src="js/frog.js"></script>
+  <script type="text/javascript" src="js/objects_auto.js"></script>
+  <script type="text/javascript" src="js/zoo.js"></script>
   <script type="text/javascript">
 $script
 
