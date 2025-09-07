@@ -3,3 +3,8 @@ function edit_taxon() {
  var u = 'taxon_info.php?id=' + taxon_id;
  window.open(u);
 }
+
+function create_taxon() {
+ var u = 'taxon_info.php?command=new';
+ window.open(u);
+}
