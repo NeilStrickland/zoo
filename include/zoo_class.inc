@@ -19,12 +19,14 @@ class zoo_class extends frog {
   $this->species_index = array();
 
   foreach($this->all_species as $s) {
-   $a = strtolower($s->genus);
-   $b = strtolower($s->species);
-   if (! isset($this->species_index[$a])) {
+   $a = strtolower($s->genus ?? '');
+   $b = strtolower($s->species ?? '');
+   if ($a && ! isset($this->species_index[$a])) {
     $this->species_index[$a] = array();
    }
-   $this->species_index[$a][$b] = $s;
+   if ($a && $b) {
+    $this->species_index[$a][$b] = $s;
+   }
   }
 
   return $this->species_index;
@@ -106,7 +108,7 @@ class zoo_class extends frog {
      chdir($cwd);
 
      if ($cleanup && count(scandir($f_full)) <= 2) {
-      rmdir($f_full);
+      @ rmdir($f_full);
      }
     }     
    } else if (preg_match('/^([a-z]+) ([a-z]+) ?[0-9]*\.jpg$/',$f0,$m)) {
@@ -164,7 +166,7 @@ class zoo_class extends frog {
      chdir($cwd);
 
      if ($cleanup && count(scandir($f_full)) <= 2) {
-      rmdir($f_full);
+      @ rmdir($f_full);
      }
     }     
    } else if (preg_match('/^([a-z]+) ([a-z]+) ?[0-9]*\.(mp3|wav)$/',$f0,$m)) {
@@ -197,18 +199,27 @@ class zoo_class extends frog {
   return 'https://en.wikipedia.org/wiki/' . $genus . '_' . $species;
  }
  
- function fetch_wiki($genus,$species) {
-  $url = $this->wiki_url($genus,$species);
-  $local_file = $this->wiki_file_name($genus,$species);
-
+ function fetch_wiki_url($url) {
+  $options = [
+   'http' => [
+    'user_agent' => 
+     'Neil Strickland/1.0 (https://strickland1.org, N.P.Strickland@gmail.com)']
+  ];
+  $context = stream_context_create($options);
   $level = error_reporting(E_ERROR);
-  $html = file_get_contents($url);
+  $html = file_get_contents($url,false,$context);
   error_reporting($level);
-
   if ($html === FALSE) {
    $html = '';
   }
-  
+  return $html;
+ }
+
+ function fetch_wiki($genus,$species) {
+  $url = $this->wiki_url($genus,$species);
+  $local_file = $this->wiki_file_name($genus,$species);
+  $html = $this->fetch_wiki_url($url);
+
   if (! (strpos($html,"Wikipedia does not have an article with this exact name") === false)) {
     $html = '';
   }
@@ -223,15 +234,8 @@ class zoo_class extends frog {
  function fetch_wiki_common($key) {
   $full_file = $this->data_dir . '/wikipedia_pages/common/' . $key . '.html';
   $url = 'https://en.wikipedia.org/wiki/' . $key;
-  
-  $level = error_reporting(E_ERROR);
-  $html = file_get_contents($url);
-  error_reporting($level);
-
-  if ($html === FALSE) {
-   $html = '';
-  }
-  
+  $html = $this->fetch_wiki_url($url);
+    
   if (! (strpos($html,"Wikipedia does not have an article with this exact name") === false)) {
     $html = '';
   }
@@ -244,6 +248,7 @@ class zoo_class extends frog {
  }
 
  function extract_wiki_taxa($html) {
+  if (! $html) { return null; }
   $doc = new DOMDocument();
   $level = error_reporting(E_ERROR | E_PARSE);
   $doc->loadHTML($html);
@@ -297,6 +302,8 @@ class zoo_class extends frog {
   $x->infobox_header = '';
   $x->snippet = '';
   
+  if (! $html) { return $x; }
+
   $doc = new DOMDocument();
   $level = error_reporting(E_ERROR | E_PARSE);
   $doc->loadHTML($html);
@@ -531,6 +538,66 @@ class zoo_class extends frog {
     }
    }
   }
+ }
+
+ function find_photos($dir=null, $location=null, $trank=null, $taxon=null) {
+  global $zoo;
+
+  $photos = new stdClass();
+  $photos->photos = [];
+  $photos->unclassified = [];
+  $photos->species_by_id = [];
+
+  if (! ($dir || $taxon || $location)) {
+   return $photos;
+  }
+
+  $w = '(x.ignore IS NULL OR x.ignore=0)';
+
+  if ($dir) {
+   $w .= " AND x.dir='{$dir}'";
+  }
+  if ($location) {
+   $w .= " AND x.location LIKE '%{$location}%'";
+  }
+
+  if ($taxon) {
+   $w .= <<<SQL
+   AND EXISTS (
+    SELECT ps.id FROM tbl_photo_species ps 
+     LEFT JOIN tbl_species s ON ps.species_id=s.id 
+     WHERE ps.photo_id=x.id 
+     AND s.`{$trank}`='{$taxon}'
+   )
+SQL;
+  }
+
+  $pp = $zoo->load_where('photo',$w);
+  foreach($pp as $p) {
+   if ($p->file_exists()) {
+    $photos->photos[] = $p;
+   }
+  }
+  $n = count($photos->photos);
+  $photos->unclassified = [];
+  $photos->species_by_id = [];
+  foreach ($photos->photos as $x) {
+   $x->load_species();
+   foreach($x->species as $ps) {
+    if (isset($photos->species_by_id[$ps->species_id])) {
+     $s = $photos->species_by_id[$ps->species_id];
+    } else {
+     $s = $zoo->load('species',$ps->species_id);
+     $s->extra->photos = [];
+     $photos->species_by_id[$s->id] = $s;
+    }
+    $s->extra->photos[] = $x;
+   }
+   if (count($x->species) == 0) {
+    $photos->unclassified[] = $x;
+   }
+  }
+  usort($photos->species_by_id, fn($a, $b) => strcmp($a->binomial, $b->binomial));
  }
 }
 
