@@ -78,8 +78,27 @@ class zoo_html extends frog_html {
   return $this->ranked_taxon_selector($field_name,$name,'family',$opts);
  }
 
+ function trank_selector($field_name,$trank='',$opts=null) {
+  $tranks = ['','kingdom','phylum','class','order','family','genus'];
+  return $this->selector($field_name,$tranks,$trank,$opts);
+ }
+
  function location_selector($field_name,$location='',$opts=null) {
   return $this->ajax_selector('location',$field_name,$location,$location,$opts);
  }
 
+ function quiz_group_selector($field_name,$id='',$opts=null) {
+  $v = '';
+  if ($id) {
+   if (is_object($id)) {
+    $p = $id;
+   } else {
+    $p = $this->frog->load('quiz_group',$id);
+   }
+   if ($p) {
+    $v = $p->name;
+   }
+  }
+  return $this->ajax_selector('quiz_group',$field_name,$id,$v,$opts);
+ }
 }
