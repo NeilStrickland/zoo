@@ -59,6 +59,8 @@ function get_params() {
 
  $params->location = get_optional_parameter('location','');
 
+ $params->order = get_restricted_parameter('order',['binomial','common','taxa'],'binomial');
+
  return $params;
 }
 
