@@ -13,6 +13,8 @@ function get_params() {
  $zoo->load_table('taxon');
  $params = new stdClass();
 
+ $params->orphans = get_optional_parameter('orphans',0) ? 1 : 0;
+
  $params->show = [];
  $params->tranks = [];
  foreach(taxon::$tranks as $r) {
@@ -24,7 +26,10 @@ function get_params() {
  }
 
  if ($params->tranks) {
-  $w = "x.trank in ('" . implode("','",$params->tranks) . "')";
+  $w = "x.trank IN ('" . implode("','",$params->tranks) . "')";
+  if ($params->orphans) {
+   $w .= " AND x.trank <> 'kingdom' AND x.parent_id IS NULL";
+  }
   $params->taxa = $zoo->load_where('taxon', $w);
  } else {
   $params->taxa = [];
@@ -43,27 +48,31 @@ function show_page($params) {
  $N->header('Taxa',['widgets' => ['autosuggest'],'scripts' => ['taxon_list']]);
  echo $N->top_menu();
 
- $taxon_sel = $H->species_selector('taxon_id','',['onchange' => 'edit_taxon()']);
+ $taxon_sel = $H->taxon_selector('taxon_id','',['onchange' => 'edit_taxon()']);
  echo <<<HTML
 <h1>Taxa</h1>
 <br>
 <form name="main_form">
 <b>Search:</b><br/> $taxon_sel
 <button type="button" onclick="edit_taxon()">Edit</button>
-<br/><br/>
+<br/>
+<button type="button" onclick="create_taxon()">Add a new taxon</button>
+<br/>
+<br/>
 </form>
 <br/>
 HTML;
 
  echo $H->edged_table_start();
- echo $H->spacer_row(50,120,80,120,50,50);
+ echo $H->spacer_row(50,120,80,120,50,50,80);
  foreach($params->taxa as $t) {
   echo $H->tr($H->td($t->id) .
               $H->td($t->name) .
               $H->td($t->trank) .
               $H->td($t->parent_name) .
               $H->popup_td('Edit', "taxon_info.php?id={$t->id}") .
-              $H->popup_td('Wiki', $t->wiki_url()));
+              $H->popup_td('Wiki', $t->wiki_url()) .
+              $H->popup_td('iNaturalist', $t->inaturalist_url()));
  }
 
  echo $H->edged_table_end();
