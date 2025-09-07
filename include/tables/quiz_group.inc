@@ -47,7 +47,9 @@ class quiz_group extends frog_object {
 
   $this->members_by_binomial = array();
   foreach ($this->members as $m) {
-   $this->members_by_binomial[strtolower($m->binomial)] = $m;
+   if ($m->binomial) {
+    $this->members_by_binomial[$m->binomial] = $m;
+   }
   }
 
   $ids = array();
