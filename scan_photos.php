@@ -90,11 +90,11 @@ function find_photos($params) {
   $ff = $full_dir . '/' . $f;
   $e = strtolower(pathinfo($ff, PATHINFO_EXTENSION));
   if (is_file($ff) && ($e == 'jpg' || $e == 'jpeg')) {
-   echo "Found new photo: $ff<br/>\n"; ob_flush(); flush();
+//   echo "Found new photo: $ff<br/>\n"; ob_flush(); flush();
    if (isset($params->photos_by_full_name[$ff])) {
-    echo "Already in database<br/>\n"; ob_flush(); flush();
+//    echo "Already in database<br/>\n"; ob_flush(); flush();
    } else {
-    echo "Adding<br/>\n"; ob_flush(); flush();
+//    echo "Adding<br/>\n"; ob_flush(); flush();
     $p = $zoo->new_object('photo');
     $p->dir = $params->dir;
     $p->file_name = $f;
