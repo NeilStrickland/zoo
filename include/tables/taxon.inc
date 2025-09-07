@@ -8,7 +8,8 @@ $zoo->add_table(
   'id' => array('type' => 'integer','notnull' => 'true'),
   'parent_id' => array('type' => 'integer', 'link' => 'taxon'),
   'trank' => array('type' => 'text'),
-  'name' => array('type' => 'text')
+  'name' => array('type' => 'text'),
+  'inaturalist_id' => array('type' => 'integer')
  ),
  array(
   'parent_name' => array('type' => 'text'),
@@ -21,7 +22,8 @@ SELECT
  x.trank,
  x.name,
  y.name AS parent_name,
- z.name AS grandparent_name
+ z.name AS grandparent_name,
+ x.inaturalist_id
 FROM tbl_taxa x
  LEFT JOIN tbl_taxa y ON x.parent_id=y.id
   LEFT JOIN tbl_taxa z ON y.parent_id=z.id
@@ -32,7 +34,7 @@ SQL
 
 class taxon extends frog_object {
  public $id,$parent_id,$trank,$name,$parent_name,$grandparent_name,
-  $parent, $grandparent, $children, $species, 
+  $inaturalist_id, $parent, $grandparent, $children, $descendants, $species, 
   $is_new, $new_parent_id;
  
  static $tranks = ['kingdom','phylum','class','order','family','genus'];
@@ -55,20 +57,58 @@ class taxon extends frog_object {
   return null;
  }
 
- function load_species() {
+ function load_species_alt() {
   global $zoo;
 
-  $q = "x.`{$this->trank}`='{$this->name}'";
-  $this->species = $zoo->load_where('species',$q);
+  $this->species = [];
+  if ($this->trank && $this->name) { 
+   $q = "x.`{$this->trank}`='{$this->name}'";
+   $this->species = $zoo->load_where('species',$q);
+  }
   return $this->species;
  }
 
  function load_children() {
   global $zoo;
 
-  $q = "x.parent_id={$this->id}";
-  $this->children = $zoo->load_where('taxon',$q);
+  $this->children = [];
+  if ($this->id) {
+   $q = "x.parent_id={$this->id}";
+   $this->children = $zoo->load_where('taxon',$q);
+  }
   return $this->children;
+ }
+
+ function load_descendants() {
+  global $zoo;
+
+  $this->descendants = [];
+  $this->load_children();
+  $cs = $this->children;
+  while (count($cs) > 0) {
+   $c = array_pop($cs);
+   $this->descendants[] = $c;
+   $c->load_children();
+   foreach ($c->children as $cc) {
+    $cs[] = $cc;
+   }
+  }
+  return $this->descendants;
+ } 
+
+ function load_species() {
+  global $zoo;
+
+  if ($this->trank == 'genus') {
+   $this->species = $zoo->load_where('species',"x.genus_id='{$this->id}'");
+  } else {
+   $this->load_children();
+   $this->species = [];
+   foreach($this->children as $c) {
+    $this->species = array_merge($this->species, $c->load_species());
+   }
+  }
+  return $this->species;
  }
 
  function get_parent() {
@@ -148,6 +188,10 @@ class taxon extends frog_object {
 
  function wiki_url() {
   return 'https://en.wikipedia.org/wiki/' .  $this->name;
+ }
+
+ function inaturalist_url() {
+  return 'https://inaturalist.org/taxa/' .  $this->name;
  }
 
  static function compare_chains($a,$b) {
