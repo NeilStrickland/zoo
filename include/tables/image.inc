@@ -82,6 +82,11 @@ class image extends frog_object {
   return ((1.0 * $this->width)/($this->height));
  }
 
+ function aspect_ratio_ok() {
+  $ar = $this->aspect_ratio();
+  return ((abs(3 * $ar - 4) > 0.02) ? false : true);
+ }
+
  function geometry_string() {
   return
    sprintf("%dx%d [%1.2f]",$this->width,$this->height,$this->aspect_ratio());
