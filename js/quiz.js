@@ -107,6 +107,15 @@ species.set_sound_src = function(e,sound_id) {
  }
 }
 
+species.play_compare_sound = function(sound_id) {
+ if (sound_id) {
+  var u = this.sound_url(sound_id);
+  quiz.compare_sound.src = u;
+  quiz.species_sound.pause();
+  quiz.compare_sound.play();
+ }
+}
+
 species.set_comparison = function(g) {
  var me = this;
  
@@ -115,11 +124,13 @@ species.set_comparison = function(g) {
  this.comparison_img.onclick = function() {
   g.rotate_image(me.comparison_img);
  }
+ g.add_sound_buttons(this.comparison_sounds);
  this.comparison_td.style.display = 'table-cell';
 };
 
 species.clear_comparison = function() {
  this.comparison_span.innerHTML = '';
+ this.comparison_sounds.innerHTML = '';
  this.comparison_img.src = '';
  this.comparison_td.style.display = 'none';
 };
@@ -140,6 +151,9 @@ species.create_dom = function() {
  td.appendChild(document.createElement('br'));
  td.appendChild(sp = document.createElement('span'));
  sp.innerHTML = this.text;
+ td.appendChild(dv = document.createElement('div'));
+ this.main_sounds = dv;
+ this.add_sound_buttons(dv);
 
  tr.appendChild(td = document.createElement('td'));
  this.comparison_td = td;
@@ -150,11 +164,32 @@ species.create_dom = function() {
  td.appendChild(document.createElement('br'));
  td.appendChild(sp = document.createElement('span'));
  this.comparison_span = sp; 
+ td.appendChild(dv = document.createElement('div'));
+ this.comparison_sounds = dv;
+
  me = this;
  this.main_img.onclick = function() {
   me.rotate_image(me.main_img);
  }
  return(li);
+};
+
+species.add_sound_buttons = function(div) {
+ var me = this;
+ var i,b,id;
+ div.innerHTML = '';
+ for (i in this.sounds) {
+  div.appendChild(b = document.createElement('button'));
+  b.innerHTML = '' + (parseInt(i) + 1);
+  id = this.sounds[i];
+  (function (id) { b.onclick = function() {
+   me.play_compare_sound(id);
+  }})(id);
+ }
+
+ if (! this.sounds || this.sounds.length == 0) {
+  div.style.display = 'none';
+ }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -225,7 +260,8 @@ quiz.init = function() {
   'mark_box',
   'species_picture_div',
   'species_picture',
-  'species_sound'
+  'species_sound',
+  'compare_sound'
  ];
 
  for (i in ids) {
@@ -236,25 +272,25 @@ quiz.init = function() {
  var w = Math.max(window.innerWidth, document.documentElement.clientWidth);
 
  if (this.is_mobile) {
-  if (w > 1000) { w = 1000; }
- } else {
   if (w > 500) { w = 500; }
+ } else {
+  if (w > 1000) { w = 1000; }
  }
  
  this.tabber_div.style.width = '' + w + 'px';
- var w0 = w - 30;
+ var w0 = w - 10;
  
  this.questions_div.style.width = '' + w0 + 'px';
  this.ok_div.style.width        = '' + w0 + 'px';
  this.incorrect_div.style.width = '' + w0 + 'px';
 
- var w1 = w0 - 30;
- var h1 = Math.round(0.75 * w1);
+ var w1 = Math.min(w0 - 30, 500);
+ var h1 = 0.75 * w1;
  this.species_picture_div.style.width  = '' + w1 + 'px';
  this.species_picture_div.style.height = '' + h1 + 'px';
 
  var w2 = w1 - 30;
- var h2 = Math.round(0.75 * w2);
+ var h2 = Math.min(Math.round(0.75 * w2), 500);
  this.species_picture.style.width  = '' + w2 + 'px';
  this.species_picture.style.height = '' + h2 + 'px';
  
@@ -309,7 +345,7 @@ quiz.show_question = function() {
   if (this.species_sound.sound_id) {
    this.species_sound.muted = false;
    this.species_sound.load();
-   this.species_sound.play();
+   this.species_sound.play().catch((err) => {});
   }
  } 
  if (! this.is_mobile) {
