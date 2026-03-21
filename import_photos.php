@@ -105,28 +105,30 @@ HTML;
 function handle_upload($params) {
  global $zoo;
 
+ $params->has_upload = false;
  if (!isset($_FILES['photos_file'])) {
-  error_page("No file uploaded");
-  exit;
+  return false;
  }
 
  $f = $zoo->data_dir . '/photos.csv';
  move_uploaded_file($_FILES['photos_file']['tmp_name'], $f);
+ $params->has_upload = true;
+ return true;
 }
 
 function do_import($params) {
  global $zoo;
 
- $f = $zoo->data_dir . '/photos.csv';
- $fh = fopen($f,'r');
- if (!$fh) {
-  error_page("Could not open file");
-  exit;
- }
-
  $params->old_photos = [];
  $params->updated_photos = [];
  $params->new_photos = [];
+
+ $f = $zoo->data_dir . '/photos.csv';
+ $fh = fopen($f,'r');
+
+ if (! $fh) { 
+  return;
+ }
 
  while(($x = fgetcsv($fh)) !== FALSE) {
   if (count($x) < 2) {
