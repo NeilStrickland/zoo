@@ -6,6 +6,9 @@ $sound_id = (int) get_required_parameter('sound_id');
 $x = $zoo->load('sound',$sound_id);
 if ($x) {
  $x->delete();
+ echo "1";
+} else {
+ echo "0";
 }
 
 ?>
