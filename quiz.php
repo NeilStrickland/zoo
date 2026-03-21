@@ -3,7 +3,7 @@
 ini_set('memory_limit', '1000M');
 
 require_once('include/zoo.inc');
-require_once('Mobile_Detect.inc');
+require_once('include/Mobile_Detect.inc');
 
 $params = get_params();
 
@@ -476,6 +476,7 @@ HTML;
 
   <div id="species_picture_div" style="width: 400px; overflow: hidden;">
    $pb<audio id="species_sound" style="display: none"></audio>
+   <audio id="compare_sound" style="display: none"></audio>
    <img id="species_picture" width="400px" src=""/>
   </div>
   <br/>
