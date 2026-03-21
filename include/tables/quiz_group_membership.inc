@@ -45,7 +45,7 @@ SQL
 class quiz_group_membership extends frog_object {
  public $id,$object,$quiz_group_id,$species_id,$quiz_group_name,
   $class,$order,$family,$genus,$species,$binomial,$common_name,$common_group,
-  $images,$sounds;
+  $images,$sounds,$has_no_images,$has_bad_images,$has_no_sounds;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
