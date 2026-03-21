@@ -71,6 +71,18 @@ class quiz_group extends frog_object {
    }
   }
 
+  foreach($this->members as $m) {
+   $m->has_no_images = (count($m->images) == 0);
+   $m->has_no_sounds = (count($m->sounds) == 0);
+   $m->has_bad_images = false;
+   foreach($m->images as $i) {
+    if (! $i->aspect_ratio_ok()) {
+     $m->has_bad_images = true;
+     break;
+    }
+   }
+  }
+
   return $this->members;
  }
 
