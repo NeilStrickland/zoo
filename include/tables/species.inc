@@ -44,7 +44,7 @@ class species extends frog_object {
  public $id,$object,$kingdom,$phylum,$class,$order,$family,$genus,$species,
   $binomial,$common_name,$common_group,$genus_id,$images,$sounds,$quiz_groups,
   $data_records,$data_records_by_source,$data_records_by_code,$species_id,
-  $external_id,$photos;
+  $external_id,$photos,$has_no_images,$has_bad_images,$has_no_sounds;
   
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -91,6 +91,15 @@ class species extends frog_object {
   } else {
    $this->images = [];
   } 
+
+  $this->has_no_images = (count($this->images) == 0);
+  $this->has_bad_images = false;
+  foreach($this->images as $i) {
+   if (! $i->aspect_ratio_ok()) {
+    $this->has_bad_images = true;
+    break;
+   }
+  }
   return $this->images;
  }
 
@@ -102,6 +111,7 @@ class species extends frog_object {
   } else {
    $this->sounds = [];
   }
+  $this->has_no_sounds = (count($this->sounds) == 0);
   return $this->sounds;
  }
 
