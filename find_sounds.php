@@ -108,7 +108,7 @@ HTML;
   foreach ($species->sounds as $x) {
    
    echo <<<HTML
-   <td>
+   <td id="deleter_td_{$x->id}">
     <a href="javascript:delete_sound({$x->id})">Delete</a>
    </td>
   
