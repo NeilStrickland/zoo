@@ -274,7 +274,7 @@ zoo.classifier.remove_photo_species = function(ps) {
    }
   }
   this.selected_photo_species.removeChild(ps.button);
-  ps.delete();
+  ps.del();
  }
 }
 
