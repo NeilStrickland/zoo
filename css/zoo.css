@@ -36,6 +36,31 @@ div.topmenu button:hover {
  background : #C0F0C0;
 }
 
+div.topmenu a {
+  flex: 1;
+  text-decoration: none;
+  outline-color: transparent;
+  text-align: center;
+  line-height: 3;
+  margin : 3px;
+  padding : 5px;
+  background : #B0E0B0;
+  border : 1px solid #70A070;
+  border-radius : 3px;
+  color: black;
+}
+
+div.topmenu a:link,
+div.topmenu a:visited,
+div.topmenu a:focus {
+  background: #B0E0B0;
+  color: black;
+}
+
+div.topmenu a:hover {
+  background: #C0F0C0;
+}
+
 h1,h2,h3,h4,h5,h6 {
  margin-bottom: 2px;
  margin-top: 10px; 
