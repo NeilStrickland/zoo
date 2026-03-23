@@ -45,6 +45,7 @@ zoo.classifier.init = function() {
  this.species_id                 = document.getElementById('species_id');
  this.species_id_display         = document.getElementById('species_id_display');
  this.create_species_button      = document.getElementById('create_species_button');
+ this.reference_page_button      = document.getElementById('reference_page_button');
 
  this.selected_photo_description.addEventListener('change', function() {
   zoo.classifier.update_photo();
@@ -56,6 +57,10 @@ zoo.classifier.init = function() {
 
  this.selected_photo_ignore.addEventListener('change', function() {
   zoo.classifier.update_photo();
+ }, false);
+
+ this.selected_photo_img.addEventListener('click', function() {
+  zoo.classifier.open_image();
  }, false);
 
  this.max_recent_species = 10;
@@ -133,6 +138,10 @@ zoo.classifier.init = function() {
 
  this.create_species_button.addEventListener('click', function() {
   zoo.classifier.create_species();
+ }, false);
+
+ this.reference_page_button.addEventListener('click', function() {
+  window.open(reference_page, '_blank');
  }, false);
 
  this.select_photo(0);
@@ -285,4 +294,11 @@ zoo.classifier.create_species = function() {
   u += '&genus=' + b[0] + '&species=' + b[1];
  }
  window.open(u);
+}
+
+zoo.classifier.open_image = function() {
+ var p = this.selected_photo;
+ if (p) {
+  window.open(p.url());
+ }
 }
