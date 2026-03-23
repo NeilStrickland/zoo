@@ -6,14 +6,18 @@ $zoo->add_table(
  'photo_dir','photo_dirs',		
  array(		
   'id' => array('type' => 'integer','notnull' => 'true'),
-  'name' => array('type' => 'text')
+  'name' => array('type' => 'text'),
+  'reference_page' => array('type' => 'text'),
+  'ignore' => array('type' => 'boolean'),
  ),
  array(
  ),
  <<<SQL
 SELECT
  x.id,
- x.name
+ x.name,
+ x.reference_page,
+ x.ignore
 FROM tbl_photo_dirs x
 WHERE %s
  ORDER BY x.name
@@ -21,9 +25,10 @@ SQL
 );
 
 class photo_dir extends frog_object {
- public $id,$name,
+ public $id,$name,$reference_page,$ignore,
   $photos,$ignored_photos,$unclassified_photos,$photos_by_name,$photos_by_id,
-  $species,$species_by_id,$species_by_binomial;
+  $photo_count,$unclassified_count,
+  $species,$species_by_id,$species_by_binomial,$species_counts;
 
  function __construct($id = null,$with_defaults=1) {
   global $zoo;
@@ -40,7 +45,7 @@ class photo_dir extends frog_object {
   return is_dir($this->full_name());
  }
 
- function load_photos() {
+ function load_photos($scan = false) {
   global $zoo;
 
   $photos = $zoo->load_where('photos',"x.dir='{$this->name}'");
@@ -58,6 +63,40 @@ class photo_dir extends frog_object {
     $this->photos_by_name[$p->file_name] = $p;
     $this->photos_by_id[$p->id] = $p; 
    }
+  }
+
+  if ($scan) {
+   $this->scan_photos();
+  }
+ }
+
+ function scan_photos() {
+  global $zoo;
+
+  if (! isset($this->photos_by_id)) {
+   $this->load_photos();
+  }
+
+  $dir = $this->full_name();
+  $photos0 = scandir($dir);
+  $new_photos = [];
+  foreach ($photos0 as $f) {
+   $ff = $dir . '/' . $f;
+   $e = strtolower(pathinfo($ff, PATHINFO_EXTENSION));
+   if (is_file($ff) && ($e == 'jpg' || $e == 'jpeg')) {
+    if (! isset($this->photos_by_name[$f])) {
+     $p = $zoo->new_object('photo');
+     $p->dir = $this->name;
+     $p->file_name = $f;
+     $p->get_exif();
+     $p->save();
+     $new_photos[] = $p;
+    }
+   }
+  }
+
+  if (count($new_photos) > 0) {
+   $this->load_photos();
   }
  }
 
