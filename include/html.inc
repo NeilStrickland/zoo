@@ -101,4 +101,63 @@ class zoo_html extends frog_html {
   }
   return $this->ajax_selector('quiz_group',$field_name,$id,$v,$opts);
  }
+
+ function photo_dir_selector($field_name,$name='',$opts=null) {
+  global $zoo;
+  $oo = ['include_unused' => false, 'include_ignored' => false, 
+         'include_unavailable' => false, 'show_counts' => false];
+
+  foreach($oo as $k => $v) {
+   if (! isset($opts[$k])) {
+    $opts[$k] = $oo[$k];
+   }
+  }
+
+  if (! isset($zoo->all_photo_dirs)) {
+   $zoo->load_photo_dirs();
+  }
+
+  if ($opts['show_counts']) {
+   $zoo->collate_photo_dirs();
+  }
+
+  $dirs = [];
+  foreach($zoo->all_photo_dirs as $name => $d) {
+   if ($d->ignore && ! $opts['include_ignored']) {
+    continue;
+   }
+
+   if (! $opts['include_unavailable'] && ! $d->is_available()) {
+    continue;
+   }
+
+   $dirs[$name] = $d;
+  }
+
+  if ($opts['include_unused']) {
+   foreach($zoo->fs_photo_dirs as $name => $d) {
+    if ($d->ignore && ! $opts['include_ignored']) {
+     continue;
+    }
+
+    if (! isset($dirs[$name])) {
+     $dirs[$name] = $d;
+    }
+   }
+  }
+
+  $vals = [];
+
+  foreach($dirs as $name => $d) {
+   $display = $name;
+   if ($opts['show_counts'] && isset($d->photo_count)) {
+    $display .= ' (' . $d->photo_count . ' | ' . $d->unclassified_count . ')';
+   }
+   $vals[$name] = $display;
+  }
+
+  $opts['mode'] = 'direct';
+  $opts['empty_option'] = true;
+  return $this->selector($field_name,$vals,$name,$opts);
+ }
 }
