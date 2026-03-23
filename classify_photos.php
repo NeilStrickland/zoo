@@ -29,6 +29,12 @@ function get_params() {
   $params->full_dir = ''; 
  }
 
+ $params->reference_page = '';
+ $dirs = make_index($zoo->load_all('photo_dirs'),'name');
+ if (isset($dirs[$params->dir])) {
+  $params->reference_page = $dirs[$params->dir]->reference_page;
+ }
+
  $params->include_classified = get_optional_parameter('include_classified',0) ? 1 : 0;
  $params->include_ignored = get_optional_parameter('include_ignored',0) ? 1 : 0; 
 
@@ -40,17 +46,7 @@ function get_params() {
 function choose_group_page($params) {
  global $zoo;
 
- $q = 'SELECT DISTINCT dir FROM tbl_photos ORDER BY dir';
- $dirs0 = $zoo->get_all($q);
- $dirs = [''];
-
- foreach ($dirs0 as $d0) {
-  $d = $d0->dir;
-  if ($d == '.' || $d == '..') { continue; }
-  if (is_dir($zoo->public_pictures_dir . '/' . $d)) {
-   $dirs[] = $d;
-  }
- }
+ $zoo->load_photo_dirs(true);
 
  $H = $zoo->html;
  $N = $zoo->nav;
@@ -58,7 +54,9 @@ function choose_group_page($params) {
  $N->header('Classify photos');
  echo $N->top_menu();
 
- $dir_sel = $H->selector('dir',$dirs,$params->dir,['onchange' => 'document.main_form.submit()']);
+ $dir_sel = $H->photo_dir_selector('dir',$params->dir,
+   ['onchange' => 'document.main_form.submit()', 'show_counts' => true]
+ );
 
  echo <<<HTML
 <h1>Classify photos</h1>
@@ -137,6 +135,7 @@ $script = <<<JS
 var photos0 = $photos0;
 var species0 = $species0;
 var locations = $locations;
+var reference_page = '{$params->reference_page}';
 
 JS;
 
@@ -151,7 +150,13 @@ JS;
 
  $cbc = $H->checkbox('include_classified',$params->include_classified,['onchange' => 'document.control_form.submit()']);
  $cbi = $H->checkbox('include_ignored',$params->include_ignored,['onchange' => 'document.control_form.submit()']);
- echo <<<HTML
+
+ $rp = '';
+ if ($params->reference_page) {
+  $rp = " <br/><br/><button id=\"reference_page_button\">Reference page</button>";
+ }
+
+echo <<<HTML
 <h1>Classify photos</h1>
 <br/>
 <form name="control_form">
@@ -204,6 +209,7 @@ JS;
   <br/>
   $ss  &nbsp;&nbsp;&nbsp; 
   <button id="create_species_button">Add a new species</button>
+   $rp
  </div>
 </div>
 HTML;
